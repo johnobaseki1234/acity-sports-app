@@ -64,8 +64,32 @@ Run these in **Supabase → SQL Editor** (one time each):
 | Phase 2: Live Scoring | ✅ Complete | Scorer panel, Realtime, live match page |
 | Phase 3: Multi-Sport + Standings | ✅ Complete | Basketball + volleyball scorer, standings, fixtures |
 | Phase 4: Profiles + Polish | ✅ Complete | Team/player profiles, search, follow, image uploads, boundaries |
-| Phase 5: Notifications + PWA | ⏳ Future | Push notifications, PWA install/manifest |
+| Phase 5: Notifications (in-app) | ✅ Complete | Dark mode (next-themes), toast notifications, global live ticker, WhatsApp share |
+| Phase 5b: PWA + web-push | ⏳ Remaining | Installable manifest + icons + service worker + VAPID push (needs image assets) |
 | Phase 6 | ⏳ Future | (Your call — define scope) |
+
+## Phase 5 — In-App Event-Driven Notifications (2026-06-18)
+
+Built on top of the manually-added Phase 5 stubs (which were empty / broken).
+
+| Piece | File | What it does |
+|-------|------|--------------|
+| Dark mode | `ui/ThemeProvider.tsx`, `ui/ThemeToggle.tsx`, `tailwind.config.ts` (`darkMode: "class"`) | next-themes class toggle, system default |
+| Toast context | `contexts/ToastContext.tsx` | `useToast()` + `ToastItem` type |
+| Toast UI | `components/realtime/ToastProvider.tsx` | stacked auto-dismiss toasts, WhatsApp share button, tap-to-open match |
+| Live ticker | `components/realtime/LiveTicker.tsx` | global realtime: live-score bar + fires toasts on scoring events; hidden on /admin + /scorer |
+| Formatters | `lib/notifications/formatter.ts` | `formatWhatsAppMessage`, `formatEventToast`, `whatsAppShareUrl` |
+
+**How to test live (needs a real match):**
+1. `npm run dev` → open `http://localhost:3000` in one tab.
+2. In another tab, open `/admin/matches`, **Score** a scheduled match, **Start Match**.
+3. Log a goal / 2pt / 3pt. Back on the homepage tab, a **toast pops** ("GOAL! — Player",
+   score line) with a **Share to WhatsApp** button, and the **live ticker bar** under the
+   header updates the score in real time.
+
+**Still orphaned (intentional):** `hooks/useRealtimeMatch.ts` is a valid single-match
+realtime hook you wrote, but `LiveMatchView` already has its own richer inline realtime,
+so the hook isn't wired in. Left as a reusable utility — not dead-broken, just unused.
 
 ---
 
