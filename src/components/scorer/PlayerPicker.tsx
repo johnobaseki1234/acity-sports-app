@@ -1,5 +1,6 @@
 "use client";
 
+import { X } from "lucide-react";
 import type { Player } from "@/lib/supabase/types";
 
 type Props = {
@@ -20,7 +21,7 @@ export function PlayerPicker({ players, teamName, eventLabel, onSelect, onCancel
             <p className="font-bold text-white">{eventLabel}</p>
             <p className="text-xs text-gray-400">{teamName} — select player</p>
           </div>
-          <button onClick={onCancel} className="text-gray-400 hover:text-white text-2xl leading-none">×</button>
+          <button onClick={onCancel} aria-label="Close" className="grid place-items-center h-8 w-8 rounded-lg text-gray-400 hover:text-white hover:bg-gray-700 transition"><X className="h-5 w-5" /></button>
         </div>
 
         {/* Player list */}

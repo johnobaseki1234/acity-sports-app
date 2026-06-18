@@ -4,6 +4,7 @@ import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { uploadImage } from "@/lib/storage/uploadImage";
+import { SportIcon } from "@/components/ui/SportIcon";
 import type { Player, Team } from "@/lib/supabase/types";
 
 const SPORT_POSITIONS: Record<string, string[]> = {
@@ -12,11 +13,6 @@ const SPORT_POSITIONS: Record<string, string[]> = {
   volleyball: ["OH", "OPP", "MB", "S", "L", "DS"],
 };
 
-const SPORT_ICONS: Record<string, string> = {
-  football: "⚽",
-  basketball: "🏀",
-  volleyball: "🏐",
-};
 
 type Sport = { id: string; name: string; slug: string };
 
@@ -201,9 +197,11 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
                 key={s.id}
                 type="button"
                 onClick={() => { setSelectedSport(s.slug); setForm((f) => ({ ...f, team_id: "" })); setStep(2); }}
-                className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 hover:border-brand-blue hover:bg-blue-50 transition-all text-left"
+                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all text-left"
               >
-                <span className="text-3xl">{SPORT_ICONS[s.slug] ?? "🏆"}</span>
+                <span className="grid place-items-center h-12 w-12 rounded-2xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
+                  <SportIcon slug={s.slug} className="h-6 w-6" />
+                </span>
                 <div>
                   <p className="font-semibold">{s.name}</p>
                   <p className="text-sm text-gray-500">{teams.filter((t) => teamSportMap[t.id] === s.slug).length} teams</p>

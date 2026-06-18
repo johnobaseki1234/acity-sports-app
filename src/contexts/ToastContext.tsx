@@ -4,7 +4,8 @@ import { createContext, useContext } from "react";
 
 export interface ToastItem {
   id: string;
-  emoji: string;
+  /** Event type used to pick a lucide icon (replaces emoji). */
+  eventType?: string;
   title: string;
   body?: string;
   /** Optional pre-formatted message; when present the toast shows a WhatsApp share button. */

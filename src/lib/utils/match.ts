@@ -27,7 +27,3 @@ export function getStatusLabel(status: MatchStatus): string {
   };
   return labels[status];
 }
-
-export function sportIcon(slug: string): string {
-  return { football: "⚽", basketball: "🏀", volleyball: "🏐" }[slug] ?? "🏆";
-}

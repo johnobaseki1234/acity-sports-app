@@ -2,7 +2,9 @@
 
 import { useCallback, useRef, useState } from "react";
 import Link from "next/link";
+import { MessageCircle, X } from "lucide-react";
 import { ToastContext, ToastItem } from "../../contexts/ToastContext";
+import { EventIcon } from "../ui/EventIcon";
 import { whatsAppShareUrl } from "../../lib/notifications/formatter";
 
 const AUTO_DISMISS_MS = 6000;
@@ -48,11 +50,13 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
 
 function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => void }) {
   const inner = (
-    <div className="flex items-start gap-3 rounded-xl border border-gray-100 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-lg px-4 py-3 animate-[slideIn_0.2s_ease-out]">
-      <span className="text-xl leading-none mt-0.5">{toast.emoji}</span>
+    <div className="flex items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl shadow-xl px-4 py-3 animate-[slideIn_0.2s_ease-out]">
+      <span className="grid place-items-center h-9 w-9 shrink-0 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
+        <EventIcon type={toast.eventType ?? ""} className="h-4 w-4" />
+      </span>
       <div className="min-w-0 flex-1">
-        <p className="font-semibold text-sm text-gray-900 dark:text-zinc-50 truncate">{toast.title}</p>
-        {toast.body && <p className="text-xs text-gray-500 dark:text-zinc-400 truncate">{toast.body}</p>}
+        <p className="font-semibold text-sm text-zinc-900 dark:text-zinc-50 truncate">{toast.title}</p>
+        {toast.body && <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">{toast.body}</p>}
         {toast.shareText && (
           <a
             href={whatsAppShareUrl(toast.shareText)}
@@ -61,7 +65,7 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1 mt-1.5 text-xs font-semibold text-green-600 hover:text-green-700"
           >
-            💬 Share to WhatsApp
+            <MessageCircle className="h-3.5 w-3.5" /> Share to WhatsApp
           </a>
         )}
       </div>
@@ -72,9 +76,9 @@ function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => vo
           onDismiss();
         }}
         aria-label="Dismiss"
-        className="text-gray-300 hover:text-gray-500 dark:text-zinc-600 dark:hover:text-zinc-400 text-lg leading-none shrink-0"
+        className="grid place-items-center h-6 w-6 shrink-0 rounded-lg text-zinc-300 hover:text-zinc-500 dark:text-zinc-600 dark:hover:text-zinc-400 transition"
       >
-        ×
+        <X className="h-4 w-4" />
       </button>
     </div>
   );

@@ -26,7 +26,6 @@ type LiveMatch = {
   status: string;
   current_period: number;
   sport_slug: string;
-  sport_icon: string;
   season_name: string;
 };
 
@@ -54,7 +53,7 @@ export function LiveTicker() {
     const home = one(row.home_team as { name: string; short_name: string }[]);
     const away = one(row.away_team as { name: string; short_name: string }[]);
     const season = one(row.season as { name: string; sport: unknown }[]);
-    const sport = one(season?.sport as { slug: string; icon: string }[]);
+    const sport = one(season?.sport as { slug: string }[]);
     return {
       id: row.id as string,
       home_team_id: row.home_team_id as string,
@@ -68,7 +67,6 @@ export function LiveTicker() {
       status: row.status as string,
       current_period: (row.current_period as number) ?? 0,
       sport_slug: sport?.slug ?? "",
-      sport_icon: sport?.icon ?? "🏆",
       season_name: season?.name ?? "",
     };
   }, []);
@@ -167,7 +165,7 @@ export function LiveTicker() {
           if (!toast) return;
 
           showToast({
-            emoji: toast.emoji,
+            eventType: ev.event_type,
             title: toast.title,
             body: toast.body,
             href: `/match/${match.id}`,

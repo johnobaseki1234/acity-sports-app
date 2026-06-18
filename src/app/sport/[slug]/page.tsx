@@ -14,10 +14,10 @@ const MATCH_SELECT = `
   season:seasons(*, sport:sports(*))
 `;
 
-const SPORT_META: Record<string, { label: string; icon: string }> = {
-  football:   { label: "Football",   icon: "⚽" },
-  basketball: { label: "Basketball", icon: "🏀" },
-  volleyball: { label: "Volleyball", icon: "🏐" },
+const SPORT_META: Record<string, { label: string }> = {
+  football:   { label: "Football" },
+  basketball: { label: "Basketball" },
+  volleyball: { label: "Volleyball" },
 };
 
 export default async function SportPage({ params }: { params: Promise<{ slug: string }> }) {
