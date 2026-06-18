@@ -7,9 +7,9 @@ import { uploadImage } from "@/lib/storage/uploadImage";
 import type { Player, Team } from "@/lib/supabase/types";
 
 const SPORT_POSITIONS: Record<string, string[]> = {
-  football: ["GK", "CB", "LB", "RB", "CM", "DM", "AM", "LW", "RW", "ST"],
+  football: ["GK", "CB", "LB", "RB", "CM", "LM", "RM", "CAM", "LW", "RW", "ST", "CF"],
   basketball: ["PG", "SG", "SF", "PF", "C"],
-  volleyball: ["S", "OH", "OPP", "MB", "L", "DS"],
+  volleyball: ["OH", "OPP", "MB", "S", "L", "DS"],
 };
 
 const SPORT_ICONS: Record<string, string> = {
@@ -41,6 +41,7 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
     position: player?.position ?? "",
     secondary_position: player?.secondary_position ?? "",
     photo_url: player?.photo_url ?? "",
+    athlete_key: player?.athlete_key ?? "",
     is_active: player?.is_active ?? true,
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -63,7 +64,7 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
 
     try {
       const photoUrl = photoFile ? await uploadImage(photoFile, "player-photos") : form.photo_url || null;
-      const payload = {
+      const payload: Record<string, unknown> = {
         team_id: form.team_id,
         name: form.name,
         jersey_number: parseInt(form.jersey_number),
@@ -72,6 +73,11 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
         photo_url: photoUrl,
         is_active: form.is_active,
       };
+      // Only send athlete_key when set, so saves still work before the
+      // phase5-extras.sql migration adds the column.
+      if (form.athlete_key.trim()) {
+        payload.athlete_key = form.athlete_key.trim();
+      }
 
       const { error } = isEdit
         ? await supabase.from("players").update(payload).eq("id", player.id)
@@ -127,6 +133,12 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
           <label className="label">Secondary Position <span className="text-gray-400 font-normal">(optional)</span></label>
           <input className="input" list="positions-edit-sec" value={form.secondary_position} onChange={(e) => set("secondary_position", e.target.value)} placeholder="e.g. PG" />
           <datalist id="positions-edit-sec">{positions.map((p) => <option key={p} value={p} />)}</datalist>
+        </div>
+        <div>
+          <label className="label">
+            Athlete Link Key <span className="text-gray-400 font-normal">(optional — same key links a student&apos;s records across sports)</span>
+          </label>
+          <input className="input" value={form.athlete_key} onChange={(e) => set("athlete_key", e.target.value)} placeholder="e.g. john-doe-2026" />
         </div>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={form.is_active} onChange={(e) => set("is_active", e.target.checked)} className="w-4 h-4 rounded" />
