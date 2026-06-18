@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import ThemeToggle from "../ui/ThemeToggle";
 
 const SPORTS = [
   { label: "All", slug: "" },
@@ -10,31 +11,40 @@ const SPORTS = [
   { label: "Volleyball", slug: "volleyball" },
 ];
 
-export function Header() {
+export default function Header() {
   const pathname = usePathname();
-  const isAdmin = pathname.startsWith("/admin") || pathname.startsWith("/scorer");
 
+  // Full-screen consoles (scorer) and the admin dashboard manage their own chrome.
+  const isAdmin = pathname.startsWith("/admin") || pathname.startsWith("/scorer");
   if (isAdmin) return null;
 
   return (
-    <header className="bg-brand-blue text-white sticky top-0 z-50 shadow-md">
+    <header className="sticky top-0 z-40 w-full border-b border-gray-100 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md transition-colors">
       <div className="max-w-2xl mx-auto px-4">
-        <div className="flex items-center justify-between h-14 gap-3">
-          <Link href="/" className="font-bold text-lg tracking-tight shrink-0">
-            ACity <span className="text-yellow-400">Sports</span>
+        <div className="h-16 flex items-center justify-between gap-3">
+          {/* Branding */}
+          <Link href="/" className="font-bold text-xl tracking-tight text-blue-600 dark:text-blue-400 shrink-0">
+            Acity Sports
           </Link>
-          <Link
-            href="/search"
-            className={`text-sm font-semibold rounded-full px-3 py-1.5 transition-colors ${
-              pathname.startsWith("/search")
-                ? "bg-white text-brand-blue"
-                : "bg-blue-800/50 text-blue-100 hover:bg-blue-700/60"
-            }`}
-          >
-            Search
-          </Link>
+
+          <nav className="flex items-center gap-2 sm:gap-3">
+            <Link
+              href="/search"
+              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${
+                pathname.startsWith("/search")
+                  ? "bg-blue-600 text-white"
+                  : "text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800"
+              }`}
+              aria-label="Search"
+            >
+              <span>🔍</span>
+              <span className="hidden sm:inline">Search</span>
+            </Link>
+            <ThemeToggle />
+          </nav>
         </div>
 
+        {/* Sport navigation pills */}
         <div className="flex gap-2 pb-3 overflow-x-auto scrollbar-hide">
           {SPORTS.map((s) => {
             const href = s.slug ? `/sport/${s.slug}` : "/";
@@ -50,8 +60,8 @@ export function Header() {
                 href={href}
                 className={`shrink-0 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-white text-brand-blue"
-                    : "bg-blue-800/50 text-blue-100 hover:bg-blue-700/60"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
                 }`}
               >
                 {s.label}

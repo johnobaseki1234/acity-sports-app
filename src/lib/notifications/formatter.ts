@@ -1,0 +1,60 @@
+interface NotificationPayload {
+  leagueName: string;
+  homeTeamName: string;
+  awayTeamName: string;
+  homeScore: number;
+  awayScore: number;
+  minute?: number;
+  playerName?: string;
+  playerInName?: string;  // For substitutions
+  playerOutName?: string; // For substitutions
+  quarterNumber?: number; // For basketball
+  setNumber?: number;     // For volleyball
+  extraStats?: string;
+}
+
+export function formatWhatsAppMessage(
+  sport: string,
+  eventType: string,
+  p: NotificationPayload
+): string {
+  const boundary = "-------------------------";
+  const header = `🏆 *${p.leagueName}*`;
+  const scoreLine = `${p.homeTeamName} *[${p.homeScore}]* - *[${p.awayScore}]* ${p.awayTeamName}`;
+  const footer = `\n_Sent live from the Acity Sports Center_`;
+
+  switch (sport) {
+    case "football":
+      if (eventType === "goal") {
+        return `⚽ *GOAL! ${p.playerName?.toUpperCase()}* ⚽\n${boundary}\n${header}\n\n🏟️ Match: ${scoreLine}\n⏱️ Minute: ${p.minute}'\n\n_Score updated in real-time!_${footer}`;
+      }
+      if (eventType === "yellow_card") {
+        return `🟨 *YELLOW CARD* 🟨\n${boundary}\n👤 Player: ${p.playerName}\n🏃‍♂️ Team: ${p.homeTeamName}\n⏱️ Minute: ${p.minute}'${footer}`;
+      }
+      if (eventType === "red_card") {
+        return `🟥 *RED CARD* 🟥\n${boundary}\n👤 Player: ${p.playerName}\n🏃‍♂️ Team: ${p.homeTeamName}\n⏱️ Minute: ${p.minute}'\n\n⚠️ Team down to 10 men!${footer}`;
+      }
+      if (eventType === "substitution") {
+        return `🔄 *SUBSTITUTION* 🔄\n${boundary}\n🟢 In: ${p.playerInName}\n🔴 Out: ${p.playerOutName}\n⏱️ Minute: ${p.minute}'${footer}`;
+      }
+      break;
+
+    case "basketball":
+      if (eventType === "quarter_end") {
+        return `🏀 *END OF QUARTER Q${p.quarterNumber}* 🏀\n${boundary}\n${header}\n\n📊 Current Score:\n${scoreLine}\n\n🔥 *Quarter Summary:* ${p.extraStats || "Intense action on the court!"}${footer}`;
+      }
+      break;
+
+    case "volleyball":
+      if (eventType === "set_won") {
+        return `🏐 *SET COMPLETED (Set ${p.setNumber})* 🏐\n${boundary}\n${header}\n\n✨ Set Result:\n${scoreLine}\n\n👏 What a spectacular rally!${footer}`;
+      }
+      break;
+      
+    case "match_end":
+      return `🏁 *FINAL WHISTLE - MATCH OVER* 🏁\n${boundary}\n${header}\n\nFinal Scoreboard:\n${scoreLine}\n\nThank you for following the action with us!${footer}`;
+  }
+
+  // Fallback default message template structure
+  return `📢 *SPORTS ALERT* 📢\n${boundary}\n${scoreLine}${footer}`;
+}

@@ -1,32 +1,25 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
+import Providers from "../components/ui/ThemeProvider";
+import Header from "../components/layout/Header";
 
 export const metadata: Metadata = {
-  title: "ACity Sports",
-  description: "Live scores and standings for Academic City University College leagues",
+  title: "Acity Sports Center",
+  description: "Live real-time operational tournament event matches portal",
 };
 
-export const viewport: Viewport = {
-  themeColor: "#1e3a5f",
-  width: "device-width",
-  initialScale: 1,
-};
-
-export default function RootLayout({ children }: { children: React.ReactNode }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <html lang="en">
-      <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
-          rel="stylesheet"
-        />
-      </head>
-      <body className="min-h-screen bg-gray-50">
-        <Header />
-        <main className="max-w-2xl mx-auto px-4 pb-16 pt-4">{children}</main>
+    <html lang="en" suppressHydrationWarning>
+      <body className="bg-gray-50 dark:bg-zinc-950 text-gray-900 dark:text-zinc-50 min-h-screen transition-colors duration-200 antialiased">
+        <Providers>
+          <Header />
+          <main className="max-w-2xl mx-auto px-4 pb-16 pt-4">{children}</main>
+        </Providers>
       </body>
     </html>
   );
