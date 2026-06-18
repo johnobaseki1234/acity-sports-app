@@ -16,8 +16,8 @@ export const metadata: Metadata = {
     title: "Acity Sports",
   },
   icons: {
-    icon: "/icon-192.png",
-    apple: "/icon-192.png",
+    icon: "/icon-192x192.png",
+    apple: "/icon-192x192.png",
   },
 };
 

@@ -4,7 +4,7 @@
 
 const CACHE = "acity-sports-v1";
 const OFFLINE_URL = "/offline.html";
-const PRECACHE = ["/offline.html", "/manifest.json", "/icon-192.png", "/icon-512.png"];
+const PRECACHE = ["/offline.html", "/manifest.json", "/icon-192x192.png", "/icon-512x512.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
@@ -65,8 +65,8 @@ self.addEventListener("push", (event) => {
   event.waitUntil(
     self.registration.showNotification(data.title || "Acity Sports Center", {
       body: data.body || "New live update",
-      icon: "/icon-192.png",
-      badge: "/icon-192.png",
+      icon: "/icon-192x192.png",
+      badge: "/icon-192x192.png",
       data: data.url ? { url: data.url } : undefined,
     })
   );

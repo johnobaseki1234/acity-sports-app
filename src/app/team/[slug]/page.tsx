@@ -2,7 +2,7 @@ import { createClient } from "../../../lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import FollowButton from "../../../components/ui/FollowButton";
-import type { Match } from "../../../lib/supabase/types";
+import type { Match, Player } from "../../../lib/supabase/types";
 
 interface TeamPageProps {
   params: Promise<{ slug: string }>;
@@ -27,8 +27,7 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
       .from("players")
       .select("*")
       .eq("team_id", team.id)
-      .eq("is_active", true)
-      .order("name", { ascending: true }),
+      .order("jersey_number", { ascending: true }),
     supabase
       .from("matches")
       .select(`
@@ -46,6 +45,12 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
   if (matchesError) {
     throw new Error(`Unable to load team matches: ${matchesError.message}`);
   }
+
+  const allPlayers = (players ?? []) as Player[];
+  // A missing status (pre-migration rows) is treated as active.
+  const activeRoster = allPlayers.filter((p) => (p.status ?? "active") === "active");
+  const retired = allPlayers.filter((p) => p.status === "retired");
+  const alumni = allPlayers.filter((p) => p.status === "alumni");
 
   const allMatches = (matches ?? []) as Match[];
   const results = allMatches
@@ -98,20 +103,22 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Roster</h2>
-          {!players || players.length === 0 ? (
-            <p className="text-gray-500 text-sm">No players assigned to this team yet.</p>
+        <div className="lg:col-span-1 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
+          <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-zinc-50 border-b border-gray-100 dark:border-zinc-800 pb-2">
+            Roster <span className="text-sm font-normal text-gray-400">({activeRoster.length})</span>
+          </h2>
+          {activeRoster.length === 0 ? (
+            <p className="text-gray-500 dark:text-zinc-400 text-sm">No active players on this team yet.</p>
           ) : (
-            <ul className="divide-y divide-gray-50">
-              {players.map((player) => (
+            <ul className="divide-y divide-gray-50 dark:divide-zinc-800">
+              {activeRoster.map((player) => (
                 <li key={player.id} className="py-3 flex items-center justify-between gap-3">
-                  <Link href={`/player/${player.id}`} className="hover:text-blue-600 transition min-w-0">
+                  <Link href={`/player/${player.id}`} className="hover:text-blue-600 dark:hover:text-blue-400 transition min-w-0">
                     <span className="font-mono text-gray-400 mr-2">#{player.jersey_number}</span>
-                    <span className="font-medium text-gray-700">{player.name}</span>
+                    <span className="font-medium text-gray-700 dark:text-zinc-200">{player.name}</span>
                   </Link>
                   {player.position && (
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded shrink-0">
+                    <span className="text-xs bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 px-2 py-1 rounded shrink-0">
                       {player.position}
                     </span>
                   )}
@@ -162,6 +169,72 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
           </div>
         </div>
       </div>
+
+      {/* Historic archive — preserved without cluttering the active roster */}
+      {(alumni.length > 0 || retired.length > 0) && (
+        <div className="mt-10">
+          <div className="flex items-center gap-3 mb-5">
+            <span className="text-2xl">🏅</span>
+            <h2 className="text-2xl font-bold text-gray-800 dark:text-zinc-50">Hall of Fame &amp; Archive</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <ArchiveGroup
+              title="Alumni"
+              subtitle="Graduated student athletes"
+              accent="from-amber-500 to-yellow-600"
+              players={alumni}
+            />
+            <ArchiveGroup
+              title="Retired Players"
+              subtitle="Career stats preserved"
+              accent="from-zinc-500 to-zinc-700"
+              players={retired}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ArchiveGroup({
+  title,
+  subtitle,
+  accent,
+  players,
+}: {
+  title: string;
+  subtitle: string;
+  accent: string;
+  players: Player[];
+}) {
+  if (players.length === 0) return null;
+  return (
+    <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+      <div className={`bg-gradient-to-r ${accent} px-5 py-4 text-white`}>
+        <h3 className="text-lg font-bold">{title}</h3>
+        <p className="text-white/80 text-xs">{subtitle} · {players.length}</p>
+      </div>
+      <ul className="divide-y divide-gray-50 dark:divide-zinc-800 p-2">
+        {players.map((player) => (
+          <li key={player.id}>
+            <Link
+              href={`/player/${player.id}`}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition"
+            >
+              <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-zinc-300 shrink-0">
+                #{player.jersey_number}
+              </div>
+              <span className="font-medium text-gray-700 dark:text-zinc-200">{player.name}</span>
+              {player.position && (
+                <span className="ml-auto text-xs bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 px-2 py-1 rounded shrink-0">
+                  {player.position}
+                </span>
+              )}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

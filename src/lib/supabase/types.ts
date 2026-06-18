@@ -64,6 +64,7 @@ export type Player = {
   secondary_position: string | null;
   photo_url: string | null;
   athlete_key?: string | null;
+  status?: "active" | "retired" | "alumni";
   is_active: boolean;
   created_at: string;
   team?: Team;

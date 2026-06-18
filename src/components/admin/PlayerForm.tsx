@@ -42,6 +42,7 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
     secondary_position: player?.secondary_position ?? "",
     photo_url: player?.photo_url ?? "",
     athlete_key: player?.athlete_key ?? "",
+    status: player?.status ?? "active",
     is_active: player?.is_active ?? true,
   });
   const [photoFile, setPhotoFile] = useState<File | null>(null);
@@ -77,6 +78,14 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
       // phase5-extras.sql migration adds the column.
       if (form.athlete_key.trim()) {
         payload.athlete_key = form.athlete_key.trim();
+      }
+      // Only send status when it leaves the default, so saves still work
+      // before the seed.sql migration adds the column.
+      if (form.status && form.status !== "active") {
+        payload.status = form.status;
+      } else if (isEdit && player.status && player.status !== "active") {
+        // Allow reverting an archived player back to active.
+        payload.status = "active";
       }
 
       const { error } = isEdit
@@ -134,11 +143,21 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
           <input className="input" list="positions-edit-sec" value={form.secondary_position} onChange={(e) => set("secondary_position", e.target.value)} placeholder="e.g. PG" />
           <datalist id="positions-edit-sec">{positions.map((p) => <option key={p} value={p} />)}</datalist>
         </div>
-        <div>
-          <label className="label">
-            Athlete Link Key <span className="text-gray-400 font-normal">(optional — same key links a student&apos;s records across sports)</span>
-          </label>
-          <input className="input" value={form.athlete_key} onChange={(e) => set("athlete_key", e.target.value)} placeholder="e.g. john-doe-2026" />
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="label">Career Status</label>
+            <select className="input" value={form.status} onChange={(e) => set("status", e.target.value)}>
+              <option value="active">Active</option>
+              <option value="retired">Retired</option>
+              <option value="alumni">Alumni</option>
+            </select>
+          </div>
+          <div>
+            <label className="label">
+              Athlete Link Key <span className="text-gray-400 font-normal">(optional)</span>
+            </label>
+            <input className="input" value={form.athlete_key} onChange={(e) => set("athlete_key", e.target.value)} placeholder="e.g. john-doe-2026" />
+          </div>
         </div>
         <label className="flex items-center gap-2 cursor-pointer">
           <input type="checkbox" checked={form.is_active} onChange={(e) => set("is_active", e.target.checked)} className="w-4 h-4 rounded" />
