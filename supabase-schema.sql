@@ -6,6 +6,11 @@
 -- ============================================================
 create extension if not exists "uuid-ossp";
 
+-- Public image buckets used by the admin upload forms.
+insert into storage.buckets (id, name, public)
+values ('team-logos', 'team-logos', true), ('player-photos', 'player-photos', true)
+on conflict (id) do update set public = excluded.public;
+
 -- ============================================================
 -- SPORTS
 -- ============================================================
@@ -72,6 +77,7 @@ insert into sports (name, slug, icon, event_types, scoring_rules, periods) value
     {"type":"service_error","label":"Service Error","affects_score":false,"requires_player":true,"color":"red","icon":"❌"},
     {"type":"substitution","label":"Substitution","affects_score":false,"requires_player":true,"color":"blue","icon":"🔄"},
     {"type":"timeout","label":"Timeout","affects_score":false,"requires_player":false,"color":"gray","icon":"⏱️"},
+    {"type":"set_start","label":"Set Start","affects_score":false,"requires_player":false,"color":"gray","icon":"▶️"},
     {"type":"set_end","label":"Set End","affects_score":false,"requires_player":false,"color":"gray","icon":"⏸️"},
     {"type":"match_end","label":"Match End","affects_score":false,"requires_player":false,"color":"gray","icon":"⏹️"}
   ]',
@@ -140,6 +146,7 @@ create table if not exists players (
   name           text not null,
   jersey_number  int not null,
   position       text not null default '',
+  secondary_position text,
   photo_url      text,
   is_active      boolean not null default true,
   created_at     timestamptz default now()
@@ -210,19 +217,24 @@ create or replace function update_match_score()
 returns trigger language plpgsql security definer as $$
 declare
   sport_rules jsonb;
+  sport_slug text;
   home_id uuid;
   away_id uuid;
   new_home int := 0;
   new_away int := 0;
-  ev_score int;
 begin
   -- Get home/away team ids and sport scoring rules
-  select m.home_team_id, m.away_team_id, s.scoring_rules
-    into home_id, away_id, sport_rules
+  select m.home_team_id, m.away_team_id, s.scoring_rules, s.slug
+    into home_id, away_id, sport_rules, sport_slug
     from matches m
     join seasons se on se.id = m.season_id
     join sports s on s.id = se.sport_id
     where m.id = coalesce(new.match_id, old.match_id);
+
+  -- Volleyball match score is sets won. Live set points are computed from events.
+  if sport_slug = 'volleyball' then
+    return coalesce(new, old);
+  end if;
 
   -- Sum scores from all scoring events for this match
   select

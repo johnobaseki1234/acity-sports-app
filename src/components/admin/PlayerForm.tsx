@@ -3,6 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { uploadImage } from "@/lib/storage/uploadImage";
 import type { Player, Team } from "@/lib/supabase/types";
 
 const SPORT_POSITIONS: Record<string, string[]> = {
@@ -23,14 +24,12 @@ interface Props {
   player?: Player;
   teams: Team[];
   sports: Sport[];
-  teamSportMap: Record<string, string>; // team_id → sport_slug
+  teamSportMap: Record<string, string>;
 }
 
 export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
   const router = useRouter();
   const isEdit = !!player;
-
-  // For edit mode, derive which sport this team belongs to
   const editSportSlug = player ? teamSportMap[player.team_id] ?? "" : "";
 
   const [step, setStep] = useState(isEdit ? 3 : 1);
@@ -41,13 +40,16 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
     jersey_number: String(player?.jersey_number ?? ""),
     position: player?.position ?? "",
     secondary_position: player?.secondary_position ?? "",
+    photo_url: player?.photo_url ?? "",
     is_active: player?.is_active ?? true,
   });
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
   const teamsForSport = teams.filter((t) => teamSportMap[t.id] === selectedSport);
   const positions = SPORT_POSITIONS[selectedSport] ?? [];
+  const photoPreview = photoFile ? URL.createObjectURL(photoFile) : form.photo_url;
 
   function set(field: string, value: string | boolean) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -59,25 +61,35 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
     setError("");
     const supabase = createClient();
 
-    const payload = {
-      team_id: form.team_id,
-      name: form.name,
-      jersey_number: parseInt(form.jersey_number),
-      position: form.position || null,
-      secondary_position: form.secondary_position || null,
-      is_active: form.is_active,
-    };
+    try {
+      const photoUrl = photoFile ? await uploadImage(photoFile, "player-photos") : form.photo_url || null;
+      const payload = {
+        team_id: form.team_id,
+        name: form.name,
+        jersey_number: parseInt(form.jersey_number),
+        position: form.position || null,
+        secondary_position: form.secondary_position || null,
+        photo_url: photoUrl,
+        is_active: form.is_active,
+      };
 
-    const { error } = isEdit
-      ? await supabase.from("players").update(payload).eq("id", player.id)
-      : await supabase.from("players").insert(payload);
+      const { error } = isEdit
+        ? await supabase.from("players").update(payload).eq("id", player.id)
+        : await supabase.from("players").insert(payload);
 
-    if (error) { setError(error.message); setSaving(false); return; }
-    router.push("/admin/players");
-    router.refresh();
+      if (error) {
+        setError(error.message);
+        setSaving(false);
+        return;
+      }
+      router.push("/admin/players");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save player.");
+      setSaving(false);
+    }
   }
 
-  // ── EDIT MODE: skip wizard, show full form ──
   if (isEdit) {
     const editTeam = teams.find((t) => t.id === form.team_id);
     return (
@@ -93,6 +105,13 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
           <label className="label">Full Name</label>
           <input className="input" value={form.name} onChange={(e) => set("name", e.target.value)} required />
         </div>
+        <PlayerPhotoField
+          previewUrl={photoPreview}
+          playerName={form.name}
+          onFileChange={setPhotoFile}
+          photoUrl={form.photo_url}
+          onPhotoUrlChange={(value) => set("photo_url", value)}
+        />
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label className="label">Jersey Number</label>
@@ -116,7 +135,7 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
         {error && <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</div>}
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
-            {saving ? "Saving…" : "Save Changes"}
+            {saving ? "Saving..." : "Save Changes"}
           </button>
           <button type="button" onClick={() => router.back()} className="btn-ghost">Cancel</button>
         </div>
@@ -124,10 +143,8 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
     );
   }
 
-  // ── CREATE MODE: step wizard ──
   return (
     <div className="bg-white rounded-xl border border-gray-100 overflow-hidden">
-      {/* Step indicator */}
       <div className="flex border-b border-gray-100">
         {["League", "Team", "Details"].map((label, i) => {
           const n = i + 1;
@@ -145,7 +162,6 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
       </div>
 
       <div className="p-6">
-        {/* Step 1: Select sport/league */}
         {step === 1 && (
           <div className="space-y-3">
             <p className="font-semibold text-gray-700 mb-4">Which league is this player in?</p>
@@ -159,14 +175,13 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
                 <span className="text-3xl">{SPORT_ICONS[s.slug] ?? "🏆"}</span>
                 <div>
                   <p className="font-semibold">{s.name}</p>
-                  <p className="text-sm text-gray-500">{teamsForSport.length} teams</p>
+                  <p className="text-sm text-gray-500">{teams.filter((t) => teamSportMap[t.id] === s.slug).length} teams</p>
                 </div>
               </button>
             ))}
           </div>
         )}
 
-        {/* Step 2: Select team */}
         {step === 2 && (
           <div className="space-y-3">
             <div className="flex items-center gap-3 mb-4">
@@ -194,7 +209,6 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
           </div>
         )}
 
-        {/* Step 3: Player details */}
         {step === 3 && (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex items-center gap-3 mb-4">
@@ -208,6 +222,13 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
               <label className="label">Full Name</label>
               <input className="input" value={form.name} onChange={(e) => set("name", e.target.value)} autoFocus required />
             </div>
+            <PlayerPhotoField
+              previewUrl={photoPreview}
+              playerName={form.name}
+              onFileChange={setPhotoFile}
+              photoUrl={form.photo_url}
+              onPhotoUrlChange={(value) => set("photo_url", value)}
+            />
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="label">Jersey Number</label>
@@ -227,12 +248,55 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
             {error && <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</div>}
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
-                {saving ? "Saving…" : "Add Player"}
+                {saving ? "Saving..." : "Add Player"}
               </button>
               <button type="button" onClick={() => router.back()} className="btn-ghost">Cancel</button>
             </div>
           </form>
         )}
+      </div>
+    </div>
+  );
+}
+
+function PlayerPhotoField({
+  previewUrl,
+  playerName,
+  onFileChange,
+  photoUrl,
+  onPhotoUrlChange,
+}: {
+  previewUrl: string;
+  playerName: string;
+  onFileChange: (file: File | null) => void;
+  photoUrl: string;
+  onPhotoUrlChange: (value: string) => void;
+}) {
+  return (
+    <div>
+      <label className="label">Player Photo</label>
+      <div className="flex items-center gap-3">
+        <div className="w-16 h-16 rounded-full border border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center text-xs font-bold text-gray-400">
+          {previewUrl ? (
+            <img src={previewUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            playerName.slice(0, 2).toUpperCase() || "Photo"
+          )}
+        </div>
+        <div className="flex-1 space-y-2">
+          <input
+            type="file"
+            accept="image/*"
+            className="input"
+            onChange={(e) => onFileChange(e.target.files?.[0] ?? null)}
+          />
+          <input
+            className="input"
+            value={photoUrl}
+            onChange={(e) => onPhotoUrlChange(e.target.value)}
+            placeholder="Or paste an existing photo URL"
+          />
+        </div>
       </div>
     </div>
   );

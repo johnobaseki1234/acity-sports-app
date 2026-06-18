@@ -3,6 +3,7 @@
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { uploadImage } from "@/lib/storage/uploadImage";
 import type { Team } from "@/lib/supabase/types";
 
 export function TeamForm({ team }: { team?: Team }) {
@@ -13,9 +14,11 @@ export function TeamForm({ team }: { team?: Team }) {
     name: team?.name ?? "",
     short_name: team?.short_name ?? "",
     slug: team?.slug ?? "",
+    logo_url: team?.logo_url ?? "",
     primary_color: team?.primary_color ?? "#1e3a5f",
     secondary_color: team?.secondary_color ?? "#ffffff",
   });
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -36,18 +39,24 @@ export function TeamForm({ team }: { team?: Team }) {
     setError("");
     const supabase = createClient();
 
-    const payload = { ...form };
-    const { error } = isEdit
-      ? await supabase.from("teams").update(payload).eq("id", team.id)
-      : await supabase.from("teams").insert(payload);
+    try {
+      const logoUrl = logoFile ? await uploadImage(logoFile, "team-logos") : form.logo_url || null;
+      const payload = { ...form, logo_url: logoUrl };
+      const { error } = isEdit
+        ? await supabase.from("teams").update(payload).eq("id", team.id)
+        : await supabase.from("teams").insert(payload);
 
-    if (error) {
-      setError(error.message);
+      if (error) {
+        setError(error.message);
+        setSaving(false);
+        return;
+      }
+      router.push("/admin/teams");
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to save team.");
       setSaving(false);
-      return;
     }
-    router.push("/admin/teams");
-    router.refresh();
   }
 
   async function handleDelete() {
@@ -67,6 +76,37 @@ export function TeamForm({ team }: { team?: Team }) {
       <div>
         <label className="label">Short Name <span className="text-gray-400 font-normal">(shown on scoreboards)</span></label>
         <input className="input" value={form.short_name} onChange={(e) => set("short_name", e.target.value)} maxLength={10} required />
+      </div>
+      <div>
+        <label className="label">Team Logo</label>
+        <div className="flex items-center gap-3">
+          <div
+            className="w-14 h-14 rounded-lg border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden text-xs font-bold text-gray-400"
+            style={!form.logo_url && !logoFile ? { background: form.primary_color } : undefined}
+          >
+            {logoFile ? (
+              <img src={URL.createObjectURL(logoFile)} alt="" className="w-full h-full object-contain" />
+            ) : form.logo_url ? (
+              <img src={form.logo_url} alt="" className="w-full h-full object-contain" />
+            ) : (
+              form.short_name || "Logo"
+            )}
+          </div>
+          <div className="flex-1 space-y-2">
+            <input
+              type="file"
+              accept="image/*"
+              className="input"
+              onChange={(e) => setLogoFile(e.target.files?.[0] ?? null)}
+            />
+            <input
+              className="input"
+              value={form.logo_url}
+              onChange={(e) => set("logo_url", e.target.value)}
+              placeholder="Or paste an existing logo URL"
+            />
+          </div>
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
