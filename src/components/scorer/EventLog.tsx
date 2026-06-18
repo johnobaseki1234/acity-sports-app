@@ -1,4 +1,5 @@
 import type { MatchEvent, Sport } from "@/lib/supabase/types";
+import { EventIcon } from "@/components/ui/EventIcon";
 
 type Props = { events: MatchEvent[]; sport: Sport };
 
@@ -41,7 +42,7 @@ function EventRow({ event, sport }: { event: MatchEvent; sport: Sport }) {
 
   return (
     <div className="flex items-center gap-2 bg-gray-800 rounded-lg px-3 py-2">
-      <span className="text-base shrink-0">{config?.icon ?? "•"}</span>
+      <EventIcon type={event.event_type} className={`h-4 w-4 shrink-0 ${colorMap[config?.color ?? "gray"]}`} />
       <div className="flex-1 min-w-0">
         <span className={`text-sm font-medium ${colorMap[config?.color ?? "gray"]}`}>
           {config?.label ?? event.event_type}

@@ -2,9 +2,12 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { ChevronLeft, Play, Pause, Square, Undo2, Zap } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Match, Player, Sport, EventTypeConfig, MatchEvent } from "@/lib/supabase/types";
 import { computePeriodScores } from "@/lib/utils/periodScores";
+import { SportIcon } from "@/components/ui/SportIcon";
+import { EventIcon } from "@/components/ui/EventIcon";
 import { EventLog } from "./EventLog";
 import { PlayerPicker } from "./PlayerPicker";
 
@@ -275,11 +278,11 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
     <div className="min-h-screen bg-gray-900 flex flex-col">
       {/* Header */}
       <div className="bg-gray-800 px-4 py-3 flex items-center justify-between">
-        <button onClick={() => router.push("/admin")} className="text-gray-400 hover:text-white text-sm">
-          ← Back
+        <button onClick={() => router.push("/admin")} className="inline-flex items-center gap-1 text-gray-400 hover:text-white text-sm">
+          <ChevronLeft className="h-4 w-4" /> Back
         </button>
-        <span className="text-xs text-gray-400 font-medium">
-          {sport.icon} {sport.name} · {match.season?.name}
+        <span className="inline-flex items-center gap-1.5 text-xs text-gray-400 font-medium">
+          <SportIcon slug={sport.slug} className="h-3.5 w-3.5" /> {sport.name} · {match.season?.name}
         </span>
         <span className="text-xs text-gray-400">{match.venue}</span>
       </div>
@@ -338,34 +341,39 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
         {/* Game controls */}
         <div className="flex justify-center gap-3 mt-4">
           {match.status === "scheduled" && (
-            <button onClick={startMatch} disabled={saving} className="bg-green-600 hover:bg-green-500 text-white font-bold px-6 py-2.5 rounded-xl disabled:opacity-50">
-              ▶ Start Match
+            <button onClick={startMatch} disabled={saving} className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-2.5 rounded-xl disabled:opacity-50">
+              <Play className="h-4 w-4" /> Start Match
             </button>
           )}
           {match.status === "live" && (
             <>
-              <button onClick={endPeriod} disabled={saving} className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-4 py-2.5 rounded-xl disabled:opacity-50 text-sm">
-                {isVolleyball
-                  ? "⏸ End Set"
-                  : match.current_period >= sport.periods.count && !(sport.slug === "basketball" && match.home_score === match.away_score)
-                    ? "⏹ End Match"
-                    : "⏸ End Period"}
-              </button>
+              {(() => {
+                const isEndMatch =
+                  !isVolleyball &&
+                  match.current_period >= sport.periods.count &&
+                  !(sport.slug === "basketball" && match.home_score === match.away_score);
+                return (
+                  <button onClick={endPeriod} disabled={saving} className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2.5 rounded-xl disabled:opacity-50 text-sm">
+                    {isEndMatch ? <Square className="h-4 w-4" /> : <Pause className="h-4 w-4" />}
+                    {isVolleyball ? "End Set" : isEndMatch ? "End Match" : "End Period"}
+                  </button>
+                );
+              })()}
               {events.length > 0 && (
-                <button onClick={undoLast} disabled={saving} className="bg-gray-600 hover:bg-gray-500 text-white px-4 py-2.5 rounded-xl text-sm">
-                  ↩ Undo
+                <button onClick={undoLast} disabled={saving} className="inline-flex items-center gap-2 bg-gray-600 hover:bg-gray-500 text-white px-4 py-2.5 rounded-xl text-sm">
+                  <Undo2 className="h-4 w-4" /> Undo
                 </button>
               )}
             </>
           )}
           {match.status === "halftime" && (
             isBasketballTiedAtEnd ? (
-              <button onClick={startNextPeriod} disabled={saving} className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold px-6 py-2.5 rounded-xl disabled:opacity-50 animate-pulse">
-                ▶ Start {nextPeriodLabel} (Tied)
+              <button onClick={startNextPeriod} disabled={saving} className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white font-bold px-6 py-2.5 rounded-xl disabled:opacity-50 animate-pulse">
+                <Play className="h-4 w-4" /> Start {nextPeriodLabel} (Tied)
               </button>
             ) : (
-              <button onClick={startNextPeriod} disabled={saving} className="bg-green-600 hover:bg-green-500 text-white font-bold px-6 py-2.5 rounded-xl disabled:opacity-50">
-                ▶ Start {nextPeriodLabel}
+              <button onClick={startNextPeriod} disabled={saving} className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-2.5 rounded-xl disabled:opacity-50">
+                <Play className="h-4 w-4" /> Start {nextPeriodLabel}
               </button>
             )
           )}
@@ -429,7 +437,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
           {isBasketballTiedAtEnd && (
             <div className="bg-yellow-950/40 border border-yellow-500/50 rounded-2xl p-5 max-w-md mx-auto text-center backdrop-blur-md">
               <div className="text-yellow-400 font-bold text-lg mb-2 flex items-center justify-center gap-2">
-                <span>🏀</span> OVERTIME REQUIRED <span>🏀</span>
+                <Zap className="h-5 w-5" /> OVERTIME REQUIRED <Zap className="h-5 w-5" />
               </div>
               <p className="text-gray-300 text-sm mb-4 font-medium">
                 {match.current_period === 4 ? "Regulation" : `OT${match.current_period - 4}`} ended in a tie ({match.home_score} – {match.away_score}).
@@ -438,9 +446,9 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
               <button
                 onClick={startNextPeriod}
                 disabled={saving}
-                className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-gray-950 font-black py-3 rounded-xl shadow-lg transition-transform active:scale-95 disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-gray-950 font-black py-3 rounded-xl shadow-lg transition-transform active:scale-95 disabled:opacity-50"
               >
-                ▶ Start {nextPeriodLabel}
+                <Play className="h-4 w-4" /> Start {nextPeriodLabel}
               </button>
             </div>
           )}
@@ -500,7 +508,7 @@ function TeamButtons({ eventTypes, homeTeam, awayTeam, onEvent, saving }: TeamBu
             disabled={saving}
             className={`${colorMap[et.color] ?? colorMap.gray} text-white rounded-xl px-3 py-3 text-sm font-medium text-left disabled:opacity-40 transition-colors`}
           >
-            <span className="text-base mr-1">{et.icon}</span>
+            <EventIcon type={et.type} className="h-4 w-4 mb-1" />
             <span className="text-xs text-gray-200 block">{homeTeam.short_name}</span>
             <span className="font-semibold">{et.label}</span>
           </button>
@@ -510,7 +518,7 @@ function TeamButtons({ eventTypes, homeTeam, awayTeam, onEvent, saving }: TeamBu
             disabled={saving}
             className={`${colorMap[et.color] ?? colorMap.gray} text-white rounded-xl px-3 py-3 text-sm font-medium text-left disabled:opacity-40 transition-colors`}
           >
-            <span className="text-base mr-1">{et.icon}</span>
+            <EventIcon type={et.type} className="h-4 w-4 mb-1" />
             <span className="text-xs text-gray-200 block">{awayTeam.short_name}</span>
             <span className="font-semibold">{et.label}</span>
           </button>

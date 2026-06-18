@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { SportIcon } from "@/components/ui/SportIcon";
 
 export type SportStatBlock = {
   sportSlug: string;
@@ -33,20 +34,20 @@ export function PlayerStatsTabs({ blocks }: { blocks: SportStatBlock[] }) {
             <button
               key={b.sportSlug + i}
               onClick={() => setActive(i)}
-              className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition ${
+              className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
                 i === active
                   ? "bg-red-600 text-white"
-                  : "bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-700"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
               }`}
             >
-              {b.sportIcon} {b.sportName}
+              <SportIcon slug={b.sportSlug} className="h-4 w-4" /> {b.sportName}
             </button>
           ))}
         </div>
       )}
 
-      <h2 className="text-xl font-bold text-gray-800 dark:text-zinc-50 mb-1">
-        {block.sportIcon} {block.sportName} Statistics
+      <h2 className="flex items-center gap-2 text-xl font-bold text-zinc-800 dark:text-zinc-50 mb-1">
+        <SportIcon slug={block.sportSlug} className="h-5 w-5 text-red-600 dark:text-red-500" /> {block.sportName} Statistics
       </h2>
       {block.teamName && (
         <p className="text-sm text-gray-400 dark:text-zinc-500 mb-4">{block.teamName}</p>

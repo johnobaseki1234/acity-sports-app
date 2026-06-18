@@ -1,5 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { Plus, CalendarRange } from "lucide-react";
+import { SportIcon } from "@/components/ui/SportIcon";
 import type { Match } from "@/lib/supabase/types";
 import { formatMatchDate, formatMatchTime } from "@/lib/utils/match";
 
@@ -15,56 +17,58 @@ export default async function MatchesPage() {
   const matches = (data ?? []) as Match[];
 
   const statusColors: Record<string, string> = {
-    live: "text-red-600 bg-red-50",
-    halftime: "text-orange-600 bg-orange-50",
-    finished: "text-gray-400 bg-gray-50",
-    scheduled: "text-blue-600 bg-blue-50",
-    postponed: "text-yellow-600 bg-yellow-50",
-    cancelled: "text-gray-400 bg-gray-50",
+    live: "text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-500/20",
+    halftime: "text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-500/20",
+    finished: "text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-500/20",
+    scheduled: "text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-500/20",
+    postponed: "text-yellow-700 dark:text-yellow-300 bg-yellow-100 dark:bg-yellow-500/20",
+    cancelled: "text-zinc-400 bg-zinc-100 dark:bg-zinc-800",
   };
 
   return (
-    <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Matches</h1>
-        <Link href="/admin/matches/new" className="btn-primary">+ Schedule Match</Link>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4">
+        <h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">Matches</h1>
+        <Link href="/admin/matches/new" className="btn-primary gap-2"><Plus className="h-4 w-4" /> Schedule</Link>
       </div>
 
       {matches.length === 0 ? (
-        <div className="text-center py-12 text-gray-400">
-          <div className="text-4xl mb-2">🗓️</div>
-          <p>No matches scheduled yet.</p>
+        <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl py-14 text-center shadow-lg">
+          <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-red-500/10 text-red-600 dark:text-red-500">
+            <CalendarRange className="h-8 w-8" strokeWidth={1.75} />
+          </div>
+          <p className="text-zinc-500 dark:text-zinc-400">No matches scheduled yet.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-gray-100 divide-y divide-gray-100">
+        <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl divide-y divide-zinc-100 dark:divide-zinc-800 shadow-lg overflow-hidden">
           {matches.map((m) => (
-            <div key={m.id} className="flex items-center gap-4 px-4 py-3">
+            <div key={m.id} className="flex items-center gap-4 px-5 py-4">
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium truncate">
+                <div className="text-sm font-bold text-zinc-900 dark:text-white truncate">
                   {m.home_team?.short_name} vs {m.away_team?.short_name}
                   {(m.status === "live" || m.status === "halftime" || m.status === "finished") && (
-                    <span className="ml-2 font-bold">
+                    <span className="ml-2 font-black text-red-600 dark:text-red-500 tabular-nums">
                       {m.home_score}–{m.away_score}
                     </span>
                   )}
                 </div>
-                <div className="text-xs text-gray-400">
-                  {m.season?.sport?.icon} {m.season?.name} · {formatMatchDate(m.scheduled_at)} {formatMatchTime(m.scheduled_at)} · {m.venue}
+                <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-0.5">
+                  <SportIcon slug={m.season?.sport?.slug} className="h-3.5 w-3.5" /> {m.season?.name} · {formatMatchDate(m.scheduled_at)} {formatMatchTime(m.scheduled_at)} · {m.venue}
                 </div>
               </div>
-              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full shrink-0 ${statusColors[m.status] ?? "text-gray-400"}`}>
+              <span className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full shrink-0 ${statusColors[m.status] ?? "text-zinc-400"}`}>
                 {m.status}
               </span>
-              <div className="flex gap-2 shrink-0">
-                <Link href={`/match/${m.id}`} className="text-xs text-gray-500 hover:underline">
+              <div className="flex gap-3 shrink-0">
+                <Link href={`/match/${m.id}`} className="text-xs font-medium text-zinc-500 dark:text-zinc-400 hover:underline">
                   View
                 </Link>
                 {(m.status === "scheduled" || m.status === "live" || m.status === "halftime") && (
-                  <Link href={`/scorer/${m.id}`} className="text-xs text-brand-blue font-medium hover:underline">
+                  <Link href={`/scorer/${m.id}`} className="text-xs font-semibold text-red-600 dark:text-red-500 hover:underline">
                     Score
                   </Link>
                 )}
-                <Link href={`/admin/matches/${m.id}`} className="text-xs text-gray-400 hover:underline">
+                <Link href={`/admin/matches/${m.id}`} className="text-xs font-medium text-zinc-400 hover:underline">
                   Edit
                 </Link>
               </div>

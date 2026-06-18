@@ -2,36 +2,35 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LayoutDashboard, Shield, UserRound, CalendarRange, Swords, type LucideIcon } from "lucide-react";
 
-const NAV = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/teams", label: "Teams" },
-  { href: "/admin/players", label: "Players" },
-  { href: "/admin/seasons", label: "Seasons" },
-  { href: "/admin/matches", label: "Matches" },
+const NAV: { href: string; label: string; Icon: LucideIcon }[] = [
+  { href: "/admin", label: "Dashboard", Icon: LayoutDashboard },
+  { href: "/admin/teams", label: "Teams", Icon: Shield },
+  { href: "/admin/players", label: "Players", Icon: UserRound },
+  { href: "/admin/seasons", label: "Seasons", Icon: CalendarRange },
+  { href: "/admin/matches", label: "Matches", Icon: Swords },
 ];
 
 export function AdminNav() {
   const pathname = usePathname();
   return (
-    <nav className="bg-white border-b border-gray-200">
-      <div className="max-w-5xl mx-auto px-4 flex gap-1 overflow-x-auto">
-        {NAV.map((item) => {
-          const isActive =
-            item.href === "/admin"
-              ? pathname === "/admin"
-              : pathname.startsWith(item.href);
+    <nav className="sticky top-16 z-30 glass border-x-0 border-t-0">
+      <div className="max-w-5xl mx-auto px-4 sm:px-5 flex gap-1.5 overflow-x-auto scrollbar-hide py-2.5">
+        {NAV.map(({ href, label, Icon }) => {
+          const isActive = href === "/admin" ? pathname === "/admin" : pathname.startsWith(href);
           return (
             <Link
-              key={item.href}
-              href={item.href}
-              className={`shrink-0 px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+              key={href}
+              href={href}
+              className={`shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 isActive
-                  ? "border-brand-blue text-brand-blue"
-                  : "border-transparent text-gray-500 hover:text-gray-900"
+                  ? "bg-red-600 text-white shadow-md shadow-red-600/25"
+                  : "text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5"
               }`}
             >
-              {item.label}
+              <Icon className="h-4 w-4" strokeWidth={2.25} />
+              {label}
             </Link>
           );
         })}

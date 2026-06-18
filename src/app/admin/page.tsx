@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import Link from "next/link";
+import { Radio, CalendarDays, Shield, CalendarRange, ArrowRight, type LucideIcon } from "lucide-react";
 import type { Match } from "@/lib/supabase/types";
 import { formatMatchTime, formatMatchDate } from "@/lib/utils/match";
 
@@ -31,46 +32,50 @@ export default async function AdminDashboard() {
   const upcoming = (todayMatches ?? []) as Match[];
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+    <div className="space-y-7">
+      <div>
+        <h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">Dashboard</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Manage live scoring, teams, seasons and fixtures.</p>
+      </div>
 
       {/* Stats row */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <StatCard label="Live Now" value={live.length} accent="red" />
-        <StatCard label="Today" value={upcoming.length} accent="blue" />
-        <StatCard label="Teams" value={teamCount ?? 0} accent="gray" />
-        <StatCard label="Seasons" value={seasonCount ?? 0} accent="gray" />
+        <StatCard Icon={Radio} label="Live Now" value={live.length} highlight={live.length > 0} />
+        <StatCard Icon={CalendarDays} label="Today" value={upcoming.length} />
+        <StatCard Icon={Shield} label="Teams" value={teamCount ?? 0} />
+        <StatCard Icon={CalendarRange} label="Seasons" value={seasonCount ?? 0} />
       </div>
 
-      {/* Live matches */}
       {live.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3">🔴 Live Matches</h2>
-          <div className="space-y-2">
-            {live.map((m) => (
-              <MatchRow key={m.id} match={m} />
-            ))}
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3.5">
+            <Radio className="h-5 w-5 text-red-600 dark:text-red-500 animate-pulse" /> Live Matches
+          </h2>
+          <div className="space-y-3">
+            {live.map((m) => <MatchRow key={m.id} match={m} />)}
           </div>
         </section>
       )}
 
-      {/* Today's upcoming */}
       {upcoming.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase mb-3">📅 Today&apos;s Matches</h2>
-          <div className="space-y-2">
-            {upcoming.map((m) => (
-              <MatchRow key={m.id} match={m} />
-            ))}
+          <h2 className="flex items-center gap-2 text-xl font-bold tracking-tight text-zinc-900 dark:text-white mb-3.5">
+            <CalendarDays className="h-5 w-5 text-red-600 dark:text-red-500" /> Today&apos;s Matches
+          </h2>
+          <div className="space-y-3">
+            {upcoming.map((m) => <MatchRow key={m.id} match={m} />)}
           </div>
         </section>
       )}
 
       {live.length === 0 && upcoming.length === 0 && (
-        <div className="text-center py-12 text-gray-400">
-          <p>No live or upcoming matches today.</p>
-          <Link href="/admin/matches/new" className="btn-primary inline-block mt-4">
-            Schedule a match
+        <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl py-14 text-center shadow-lg">
+          <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-red-500/10 text-red-600 dark:text-red-500">
+            <CalendarDays className="h-8 w-8" strokeWidth={1.75} />
+          </div>
+          <p className="font-medium text-zinc-500 dark:text-zinc-400">No live or upcoming matches today.</p>
+          <Link href="/admin/matches/new" className="btn-primary mt-5 inline-flex gap-2">
+            Schedule a match <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       )}
@@ -78,16 +83,32 @@ export default async function AdminDashboard() {
   );
 }
 
-function StatCard({ label, value, accent }: { label: string; value: number; accent: string }) {
-  const colors: Record<string, string> = {
-    red: "text-red-600 bg-red-50",
-    blue: "text-blue-700 bg-blue-50",
-    gray: "text-gray-700 bg-gray-100",
-  };
+function StatCard({
+  Icon,
+  label,
+  value,
+  highlight,
+}: {
+  Icon: LucideIcon;
+  label: string;
+  value: number;
+  highlight?: boolean;
+}) {
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4">
-      <div className={`text-3xl font-bold ${colors[accent]?.split(" ")[0]}`}>{value}</div>
-      <div className="text-xs text-gray-500 mt-1">{label}</div>
+    <div
+      className={`rounded-3xl border p-5 shadow-lg backdrop-blur-xl transition-all ${
+        highlight
+          ? "bg-gradient-to-br from-red-600 to-red-800 border-red-700 text-white"
+          : "bg-white/80 dark:bg-zinc-900/80 border-zinc-200 dark:border-zinc-800"
+      }`}
+    >
+      <Icon className={`h-5 w-5 ${highlight ? "text-white/90" : "text-red-600 dark:text-red-500"}`} strokeWidth={2.25} />
+      <div className={`mt-2 text-3xl font-black tabular-nums ${highlight ? "text-white" : "text-zinc-900 dark:text-white"}`}>
+        {value}
+      </div>
+      <div className={`text-xs font-semibold uppercase tracking-wide mt-0.5 ${highlight ? "text-white/70" : "text-zinc-500 dark:text-zinc-400"}`}>
+        {label}
+      </div>
     </div>
   );
 }
@@ -95,26 +116,22 @@ function StatCard({ label, value, accent }: { label: string; value: number; acce
 function MatchRow({ match }: { match: Match }) {
   const isLive = match.status === "live" || match.status === "halftime";
   return (
-    <div className="bg-white rounded-xl border border-gray-100 p-4 flex items-center justify-between gap-4">
-      <div className="flex-1 text-sm">
-        <span className="font-medium">{match.home_team?.short_name}</span>
-        <span className="text-gray-400 mx-2">vs</span>
-        <span className="font-medium">{match.away_team?.short_name}</span>
-        {isLive && (
-          <span className="ml-2 text-red-600 font-bold">
+    <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-2xl p-4 flex items-center justify-between gap-4 shadow-sm">
+      <div className="flex-1 text-sm min-w-0">
+        <span className="font-bold text-zinc-900 dark:text-white">{match.home_team?.short_name}</span>
+        <span className="text-zinc-400 mx-2">vs</span>
+        <span className="font-bold text-zinc-900 dark:text-white">{match.away_team?.short_name}</span>
+        {isLive ? (
+          <span className="ml-2 text-red-600 dark:text-red-500 font-black tabular-nums">
             {match.home_score} – {match.away_score}
           </span>
-        )}
-        {!isLive && (
-          <span className="ml-2 text-gray-400 text-xs">
+        ) : (
+          <span className="ml-2 text-zinc-400 text-xs">
             {formatMatchDate(match.scheduled_at)} {formatMatchTime(match.scheduled_at)}
           </span>
         )}
       </div>
-      <Link
-        href={`/scorer/${match.id}`}
-        className="btn-primary text-xs py-1.5 px-3 shrink-0"
-      >
+      <Link href={`/scorer/${match.id}`} className="btn-primary text-xs h-10 px-4 shrink-0">
         {isLive ? "Continue" : "Score"}
       </Link>
     </div>
