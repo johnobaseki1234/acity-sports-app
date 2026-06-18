@@ -1,4 +1,4 @@
-interface NotificationPayload {
+export interface NotificationPayload {
   leagueName: string;
   homeTeamName: string;
   awayTeamName: string;
@@ -57,4 +57,60 @@ export function formatWhatsAppMessage(
 
   // Fallback default message template structure
   return `📢 *SPORTS ALERT* 📢\n${boundary}\n${scoreLine}${footer}`;
+}
+
+// ── In-app toast formatting ───────────────────────────────────────
+export interface ToastContent {
+  emoji: string;
+  title: string;
+  body: string;
+}
+
+// Maps a raw event type to a short, friendly toast. Returns null for
+// events that aren't worth interrupting the viewer for (e.g. period
+// markers, missed shots), so the ticker only toasts noteworthy moments.
+export function formatEventToast(
+  sport: string,
+  eventType: string,
+  p: NotificationPayload
+): ToastContent | null {
+  const who = p.playerName ? ` — ${p.playerName}` : "";
+  const score = `${p.homeTeamName} ${p.homeScore}–${p.awayScore} ${p.awayTeamName}`;
+
+  switch (eventType) {
+    case "goal":
+    case "penalty_scored":
+      return { emoji: "⚽", title: `GOAL!${who}`, body: score };
+    case "points_2":
+      return { emoji: "🏀", title: `2 Points${who}`, body: score };
+    case "points_3":
+      return { emoji: "🏀", title: `3-Pointer!${who}`, body: score };
+    case "free_throw_made":
+      return { emoji: "🏀", title: `Free throw${who}`, body: score };
+    case "ace":
+      return { emoji: "🏐", title: `Ace!${who}`, body: score };
+    case "kill":
+      return { emoji: "💥", title: `Kill!${who}`, body: score };
+    case "block":
+      return { emoji: "🛡️", title: `Block!${who}`, body: score };
+    case "point":
+      return { emoji: "🏐", title: "Point", body: score };
+    case "yellow_card":
+      return { emoji: "🟨", title: `Yellow card${who}`, body: score };
+    case "red_card":
+      return { emoji: "🟥", title: `Red card${who}`, body: score };
+    case "match_end":
+      return { emoji: "🏁", title: "Full time", body: score };
+    case "quarter_end":
+      return { emoji: "🏀", title: `End of Q${p.quarterNumber ?? ""}`.trim(), body: score };
+    case "set_end":
+      return { emoji: "🏐", title: `Set ${p.setNumber ?? ""} done`.trim(), body: score };
+    default:
+      return null;
+  }
+}
+
+// Builds a WhatsApp share deep-link from a pre-formatted message.
+export function whatsAppShareUrl(message: string): string {
+  return `https://wa.me/?text=${encodeURIComponent(message)}`;
 }
