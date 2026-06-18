@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { MatchCard } from "@/components/matches/MatchCard";
 import { LiveScoreboard } from "@/components/matches/LiveScoreboard";
+import { Hero } from "@/components/home/Hero";
+import { SportFilters } from "@/components/home/SportFilters";
+import { Reveal, Stagger, StaggerItem } from "@/components/motion/Motion";
+import { EmptyState } from "@/components/ui/EmptyState";
 import { formatMatchDate } from "@/lib/utils/match";
 import type { Match } from "@/lib/supabase/types";
 
@@ -13,7 +17,6 @@ const MATCH_SELECT = `
 
 async function getMatches() {
   const supabase = await createClient();
-  const now = new Date().toISOString();
   const twoDaysAgo = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString();
   const threeDaysAhead = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString();
 
@@ -32,17 +35,28 @@ export default async function HomePage() {
 
   const live = matches.filter((m) => m.status === "live" || m.status === "halftime");
   const upcoming = matches.filter((m) => m.status === "scheduled");
-  const recent = matches.filter((m) => m.status === "finished").slice(-5).reverse();
+  const recent = matches.filter((m) => m.status === "finished").slice(-6).reverse();
+
+  const todayCount = matches.filter((m) => formatMatchDate(m.scheduled_at) === "Today").length;
+  const seasonName = matches[0]?.season?.name ?? "—";
 
   return (
-    <div className="space-y-6">
-      {/* Live Now — real-time client component */}
+    <div className="space-y-7">
+      <Reveal>
+        <Hero liveCount={live.length} todayCount={todayCount} seasonName={seasonName} />
+      </Reveal>
+
+      <Reveal delay={0.05}>
+        <SportFilters />
+      </Reveal>
+
+      {/* Live Now — realtime client component */}
       <LiveScoreboard initialLive={live} />
 
       {/* Upcoming */}
       {upcoming.length > 0 && (
         <section>
-          <SectionHeader label="📅 Upcoming" />
+          <SectionHeader emoji="📅" label="Upcoming" count={upcoming.length} />
           <UpcomingList matches={upcoming} />
         </section>
       )}
@@ -50,30 +64,37 @@ export default async function HomePage() {
       {/* Recent Results */}
       {recent.length > 0 && (
         <section>
-          <SectionHeader label="✅ Recent Results" />
-          <div className="space-y-3">
-            {recent.map((m) => <MatchCard key={m.id} match={m} />)}
-          </div>
+          <SectionHeader emoji="✅" label="Recent Results" count={recent.length} />
+          <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {recent.map((m) => (
+              <StaggerItem key={m.id}>
+                <MatchCard match={m} />
+              </StaggerItem>
+            ))}
+          </Stagger>
         </section>
       )}
 
       {matches.length === 0 && (
-        <div className="text-center py-16 text-gray-400">
-          <div className="text-4xl mb-3">🏆</div>
-          <p className="font-medium">No matches scheduled yet</p>
-          <p className="text-sm">Check back when the season starts</p>
-        </div>
+        <Reveal>
+          <EmptyState
+            icon="🏟️"
+            title="No matches scheduled yet"
+            message="Live scores and fixtures will appear here as soon as the season kicks off."
+          />
+        </Reveal>
       )}
     </div>
   );
 }
 
-function SectionHeader({ label, count }: { label: string; count?: number }) {
+function SectionHeader({ emoji, label, count }: { emoji: string; label: string; count?: number }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
-      <h2 className="font-bold text-sm uppercase tracking-wide text-gray-500">{label}</h2>
+    <div className="flex items-center gap-2.5 mb-3.5 px-0.5">
+      <span className="text-base">{emoji}</span>
+      <h2 className="font-extrabold tracking-tight text-gray-900 dark:text-white">{label}</h2>
       {count !== undefined && (
-        <span className="bg-red-100 text-red-600 text-xs font-bold px-1.5 py-0.5 rounded-full">
+        <span className="rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-bold px-2 py-0.5">
           {count}
         </span>
       )}
@@ -82,7 +103,6 @@ function SectionHeader({ label, count }: { label: string; count?: number }) {
 }
 
 function UpcomingList({ matches }: { matches: Match[] }) {
-  // Group by date
   const grouped = matches.reduce<Record<string, Match[]>>((acc, m) => {
     const key = formatMatchDate(m.scheduled_at);
     (acc[key] ??= []).push(m);
@@ -90,13 +110,19 @@ function UpcomingList({ matches }: { matches: Match[] }) {
   }, {});
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {Object.entries(grouped).map(([date, dayMatches]) => (
         <div key={date}>
-          <p className="text-xs font-semibold text-gray-400 uppercase mb-2">{date}</p>
-          <div className="space-y-3">
-            {dayMatches.map((m) => <MatchCard key={m.id} match={m} />)}
-          </div>
+          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-zinc-500 mb-2.5 px-0.5">
+            {date}
+          </p>
+          <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {dayMatches.map((m) => (
+              <StaggerItem key={m.id}>
+                <MatchCard match={m} />
+              </StaggerItem>
+            ))}
+          </Stagger>
         </div>
       ))}
     </div>

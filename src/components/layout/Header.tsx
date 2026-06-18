@@ -4,70 +4,83 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import ThemeToggle from "../ui/ThemeToggle";
 
-const SPORTS = [
-  { label: "All", slug: "" },
-  { label: "Football", slug: "football" },
-  { label: "Basketball", slug: "basketball" },
-  { label: "Volleyball", slug: "volleyball" },
+const NAV = [
+  { label: "Home", href: "/", match: (p: string) => p === "/" },
+  { label: "Fixtures", href: "/fixtures/basketball", match: (p: string) => p.startsWith("/fixtures") },
+  { label: "Search", href: "/search", match: (p: string) => p.startsWith("/search") },
+  { label: "Standings", href: "/standings/basketball", match: (p: string) => p.startsWith("/standings") },
+  { label: "Following", href: "/following", match: (p: string) => p.startsWith("/following") },
 ];
 
 export default function Header() {
   const pathname = usePathname();
 
   // Full-screen consoles (scorer) and the admin dashboard manage their own chrome.
-  const isAdmin = pathname.startsWith("/admin") || pathname.startsWith("/scorer");
-  if (isAdmin) return null;
+  if (pathname.startsWith("/admin") || pathname.startsWith("/scorer")) return null;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-gray-100 dark:border-zinc-800 bg-white/80 dark:bg-zinc-950/80 backdrop-blur-md transition-colors">
-      <div className="max-w-2xl mx-auto px-4">
-        <div className="h-16 flex items-center justify-between gap-3">
-          {/* Branding */}
-          <Link href="/" className="font-bold text-xl tracking-tight text-blue-600 dark:text-blue-400 shrink-0">
-            Acity Sports
+    <header className="sticky top-0 z-40 w-full">
+      <div className="glass-strong border-x-0 border-t-0">
+        <div className="max-w-5xl mx-auto px-4 sm:px-5 h-16 flex items-center justify-between gap-4">
+          {/* Brand lockup */}
+          <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
+            <span className="grid place-items-center h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-lg shadow-lg shadow-blue-600/20 transition-transform group-active:scale-95">
+              🏆
+            </span>
+            <span className="leading-tight">
+              <span className="block font-extrabold tracking-tight text-[15px] text-gray-900 dark:text-white">
+                ACITY <span className="text-blue-600 dark:text-blue-400">SPORTS</span>
+              </span>
+              <span className="block text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+                Live University Sports
+              </span>
+            </span>
           </Link>
 
-          <nav className="flex items-center gap-2 sm:gap-3">
+          {/* Desktop nav */}
+          <nav className="hidden md:flex items-center gap-1">
+            {NAV.map((item) => {
+              const active = item.match(pathname);
+              return (
+                <Link
+                  key={item.label}
+                  href={item.href}
+                  className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                    active
+                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
+                      : "text-gray-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5"
+                  }`}
+                >
+                  {item.label}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Actions */}
+          <div className="flex items-center gap-1.5 shrink-0">
             <Link
               href="/search"
-              className={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium transition ${
-                pathname.startsWith("/search")
-                  ? "bg-blue-600 text-white"
-                  : "text-gray-700 dark:text-zinc-300 hover:bg-gray-50 dark:hover:bg-zinc-800"
-              }`}
               aria-label="Search"
+              className="md:hidden grid place-items-center h-10 w-10 rounded-xl text-lg hover:bg-black/5 dark:hover:bg-white/5 transition active:scale-95"
             >
-              <span>🔍</span>
-              <span className="hidden sm:inline">Search</span>
+              🔍
             </Link>
             <ThemeToggle />
-          </nav>
-        </div>
-
-        {/* Sport navigation pills */}
-        <div className="flex gap-2 pb-3 overflow-x-auto scrollbar-hide">
-          {SPORTS.map((s) => {
-            const href = s.slug ? `/sport/${s.slug}` : "/";
-            const isActive =
-              s.slug === ""
-                ? pathname === "/"
-                : pathname.startsWith(`/sport/${s.slug}`) ||
-                  pathname.startsWith(`/standings/${s.slug}`) ||
-                  pathname.startsWith(`/fixtures/${s.slug}`);
-            return (
-              <Link
-                key={s.slug}
-                href={href}
-                className={`shrink-0 px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                  isActive
-                    ? "bg-blue-600 text-white"
-                    : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-                }`}
-              >
-                {s.label}
-              </Link>
-            );
-          })}
+            <button
+              aria-label="Notifications"
+              className="relative grid place-items-center h-10 w-10 rounded-xl text-lg hover:bg-black/5 dark:hover:bg-white/5 transition active:scale-95"
+            >
+              🔔
+              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-900" />
+            </button>
+            <button
+              aria-label="Account"
+              className="grid place-items-center h-10 w-10 rounded-xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-700 dark:to-zinc-800 text-sm font-bold text-gray-600 dark:text-zinc-200 transition active:scale-95"
+            >
+              AC
+            </button>
+          </div>
         </div>
       </div>
     </header>

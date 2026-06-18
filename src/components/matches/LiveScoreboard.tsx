@@ -35,13 +35,15 @@ export function LiveScoreboard({ initialLive, sportSlug }: Props) {
 
   return (
     <section>
-      <div className="flex items-center gap-2 mb-3">
-        <h2 className="font-bold text-sm uppercase tracking-wide text-gray-500">🔴 Live Now</h2>
-        <span className="bg-red-100 text-red-600 text-xs font-bold px-1.5 py-0.5 rounded-full">
+      <div className="flex items-center gap-2.5 mb-3.5 px-0.5">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold px-2.5 py-1">
+          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> LIVE NOW
+        </span>
+        <span className="rounded-full bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-300 text-xs font-bold px-2 py-0.5">
           {liveMatches.length}
         </span>
       </div>
-      <div className="space-y-3">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {liveMatches.map((m) => <MatchCard key={m.id} match={m} />)}
       </div>
     </section>
