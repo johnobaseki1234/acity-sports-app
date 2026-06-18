@@ -35,7 +35,7 @@ export function PlayerStatsTabs({ blocks }: { blocks: SportStatBlock[] }) {
               onClick={() => setActive(i)}
               className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition ${
                 i === active
-                  ? "bg-blue-600 text-white"
+                  ? "bg-red-600 text-white"
                   : "bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 hover:bg-gray-200 dark:hover:bg-zinc-700"
               }`}
             >
@@ -80,7 +80,7 @@ export function PlayerStatsTabs({ blocks }: { blocks: SportStatBlock[] }) {
                 className="p-3 border border-gray-100 dark:border-zinc-800 rounded-xl flex justify-between items-center bg-gray-50/50 dark:bg-zinc-800/40 text-sm"
               >
                 <div>
-                  <span className="font-semibold text-blue-600 dark:text-blue-400 capitalize mr-2">{event.label}</span>
+                  <span className="font-semibold text-red-600 dark:text-red-400 capitalize mr-2">{event.label}</span>
                   {event.minute != null && (
                     <span className="text-gray-400 dark:text-zinc-500 font-mono text-xs">Minute {event.minute}</span>
                   )}

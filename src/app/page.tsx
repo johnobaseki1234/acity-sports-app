@@ -7,6 +7,7 @@ import { Reveal, Stagger, StaggerItem } from "@/components/motion/Motion";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatMatchDate } from "@/lib/utils/match";
 import type { Match } from "@/lib/supabase/types";
+import { CalendarDays, History, CalendarX, type LucideIcon } from "lucide-react";
 
 const MATCH_SELECT = `
   *,
@@ -56,7 +57,7 @@ export default async function HomePage() {
       {/* Upcoming */}
       {upcoming.length > 0 && (
         <section>
-          <SectionHeader emoji="📅" label="Upcoming" count={upcoming.length} />
+          <SectionHeader Icon={CalendarDays} label="Upcoming" count={upcoming.length} />
           <UpcomingList matches={upcoming} />
         </section>
       )}
@@ -64,7 +65,7 @@ export default async function HomePage() {
       {/* Recent Results */}
       {recent.length > 0 && (
         <section>
-          <SectionHeader emoji="✅" label="Recent Results" count={recent.length} />
+          <SectionHeader Icon={History} label="Recent Results" count={recent.length} />
           <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recent.map((m) => (
               <StaggerItem key={m.id}>
@@ -78,7 +79,7 @@ export default async function HomePage() {
       {matches.length === 0 && (
         <Reveal>
           <EmptyState
-            icon="🏟️"
+            Icon={CalendarX}
             title="No matches scheduled yet"
             message="Live scores and fixtures will appear here as soon as the season kicks off."
           />
@@ -88,13 +89,13 @@ export default async function HomePage() {
   );
 }
 
-function SectionHeader({ emoji, label, count }: { emoji: string; label: string; count?: number }) {
+function SectionHeader({ Icon, label, count }: { Icon: LucideIcon; label: string; count?: number }) {
   return (
-    <div className="flex items-center gap-2.5 mb-3.5 px-0.5">
-      <span className="text-base">{emoji}</span>
-      <h2 className="font-extrabold tracking-tight text-gray-900 dark:text-white">{label}</h2>
+    <div className="flex items-center gap-2 mb-3.5 px-0.5">
+      <Icon className="h-5 w-5 text-red-600 dark:text-red-500" strokeWidth={2.25} />
+      <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{label}</h2>
       {count !== undefined && (
-        <span className="rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-bold px-2 py-0.5">
+        <span className="rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 text-xs font-bold px-2 py-0.5">
           {count}
         </span>
       )}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MatchCard } from "@/components/matches/MatchCard";
 import { LiveScoreboard } from "@/components/matches/LiveScoreboard";
+import { SportIcon } from "@/components/ui/SportIcon";
 import { formatMatchDate } from "@/lib/utils/match";
 import type { Match } from "@/lib/supabase/types";
 
@@ -47,11 +48,12 @@ export default async function SportPage({ params }: { params: Promise<{ slug: st
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold pt-1">
-        {meta.icon} {meta.label}
+      <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight pt-1 text-zinc-900 dark:text-white">
+        <SportIcon slug={slug} className="h-8 w-8 text-red-600 dark:text-red-500" />
+        {meta.label}
       </h1>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2.5">
         <Link href={`/standings/${slug}`} className="sport-pill sport-pill-inactive">Standings</Link>
         <Link href={`/fixtures/${slug}`} className="sport-pill sport-pill-inactive">Fixtures</Link>
       </div>
@@ -60,25 +62,27 @@ export default async function SportPage({ params }: { params: Promise<{ slug: st
 
       {upcoming.length > 0 && (
         <section>
-          <SectionHeader label="📅 Upcoming" />
+          <SectionHeader label="Upcoming" />
           <UpcomingList matches={upcoming} />
         </section>
       )}
 
       {recent.length > 0 && (
         <section>
-          <SectionHeader label="✅ Results" />
-          <div className="space-y-3">
+          <SectionHeader label="Results" />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recent.map((m) => <MatchCard key={m.id} match={m} />)}
           </div>
         </section>
       )}
 
       {matches.length === 0 && (
-        <div className="text-center py-16 text-gray-400">
-          <div className="text-4xl mb-3">{meta.icon}</div>
-          <p className="font-medium">No matches scheduled</p>
-          <p className="text-sm">Check back when the season starts</p>
+        <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl py-16 text-center shadow-lg">
+          <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-red-500/10 text-red-600 dark:text-red-500">
+            <SportIcon slug={slug} className="h-8 w-8" />
+          </div>
+          <p className="font-medium text-zinc-500 dark:text-zinc-400">No matches scheduled</p>
+          <p className="text-sm text-zinc-400 dark:text-zinc-500">Check back when the season starts</p>
         </div>
       )}
     </div>
@@ -87,8 +91,8 @@ export default async function SportPage({ params }: { params: Promise<{ slug: st
 
 function SectionHeader({ label }: { label: string }) {
   return (
-    <div className="flex items-center gap-2 mb-3">
-      <h2 className="font-bold text-sm uppercase tracking-wide text-gray-500">{label}</h2>
+    <div className="flex items-center gap-2 mb-3.5 px-0.5">
+      <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{label}</h2>
     </div>
   );
 }
@@ -101,11 +105,11 @@ function UpcomingList({ matches }: { matches: Match[] }) {
   }, {});
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {Object.entries(grouped).map(([date, dayMatches]) => (
         <div key={date}>
-          <p className="text-xs font-semibold text-gray-400 uppercase mb-2">{date}</p>
-          <div className="space-y-3">
+          <p className="text-xs font-bold uppercase tracking-wide text-zinc-400 dark:text-zinc-500 mb-2.5 px-0.5">{date}</p>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {dayMatches.map((m) => <MatchCard key={m.id} match={m} />)}
           </div>
         </div>

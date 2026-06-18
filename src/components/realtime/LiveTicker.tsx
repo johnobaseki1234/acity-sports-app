@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Radio } from "lucide-react";
 import { createClient } from "../../lib/supabase/client";
+import { SportIcon } from "../ui/SportIcon";
 import { useToast } from "../../contexts/ToastContext";
 import {
   formatEventToast,
@@ -184,18 +186,18 @@ export function LiveTicker() {
   if (isAdmin || matches.length === 0) return null;
 
   return (
-    <div className="bg-brand-blue text-white dark:bg-zinc-900 border-b border-blue-900/40 dark:border-zinc-800">
-      <div className="max-w-2xl mx-auto px-4 py-2 flex items-center gap-3 overflow-x-auto scrollbar-hide">
-        <span className="flex items-center gap-1 text-xs font-bold uppercase tracking-wide shrink-0">
-          <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" /> Live
+    <div className="bg-gradient-to-r from-red-700 to-red-600 text-white dark:from-zinc-900 dark:to-zinc-900 border-b border-red-800/40 dark:border-zinc-800">
+      <div className="max-w-5xl mx-auto px-4 py-2 flex items-center gap-3 overflow-x-auto scrollbar-hide">
+        <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide shrink-0">
+          <Radio className="h-3.5 w-3.5 animate-pulse" /> Live
         </span>
         {matches.map((m) => (
           <Link
             key={m.id}
             href={`/match/${m.id}`}
-            className="shrink-0 flex items-center gap-2 text-sm bg-white/10 hover:bg-white/20 rounded-full px-3 py-1 transition-colors"
+            className="shrink-0 flex items-center gap-2 text-sm bg-white/15 hover:bg-white/25 rounded-full px-3 py-1 transition-colors"
           >
-            <span>{m.sport_icon}</span>
+            <SportIcon slug={m.sport_slug} className="h-3.5 w-3.5" />
             <span className="font-medium">{m.home_short}</span>
             <span className="font-bold tabular-nums">
               {m.home_score}–{m.away_score}

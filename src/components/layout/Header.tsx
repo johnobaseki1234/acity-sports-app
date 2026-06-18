@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Trophy, Search, Bell } from "lucide-react";
 import ThemeToggle from "../ui/ThemeToggle";
 
 const NAV = [
@@ -15,7 +16,6 @@ const NAV = [
 export default function Header() {
   const pathname = usePathname();
 
-  // Full-screen consoles (scorer) and the admin dashboard manage their own chrome.
   if (pathname.startsWith("/admin") || pathname.startsWith("/scorer")) return null;
 
   return (
@@ -24,14 +24,14 @@ export default function Header() {
         <div className="max-w-5xl mx-auto px-4 sm:px-5 h-16 flex items-center justify-between gap-4">
           {/* Brand lockup */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <span className="grid place-items-center h-10 w-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white text-lg shadow-lg shadow-blue-600/20 transition-transform group-active:scale-95">
-              🏆
+            <span className="grid place-items-center h-10 w-10 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 text-white shadow-lg shadow-red-600/25 transition-transform group-active:scale-95">
+              <Trophy className="h-5 w-5" strokeWidth={2.25} />
             </span>
             <span className="leading-tight">
-              <span className="block font-extrabold tracking-tight text-[15px] text-gray-900 dark:text-white">
-                ACITY <span className="text-blue-600 dark:text-blue-400">SPORTS</span>
+              <span className="block font-extrabold tracking-tight text-[15px] text-zinc-900 dark:text-white">
+                ACITY <span className="text-red-600 dark:text-red-500">SPORTS</span>
               </span>
-              <span className="block text-[10px] font-medium uppercase tracking-wider text-gray-400 dark:text-zinc-500">
+              <span className="block text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                 Live University Sports
               </span>
             </span>
@@ -45,10 +45,10 @@ export default function Header() {
                 <Link
                   key={item.label}
                   href={item.href}
-                  className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-all ${
+                  className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
                     active
-                      ? "bg-blue-600 text-white shadow-md shadow-blue-600/20"
-                      : "text-gray-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5"
+                      ? "bg-red-600 text-white shadow-md shadow-red-600/25"
+                      : "text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
                   {item.label}
@@ -62,21 +62,21 @@ export default function Header() {
             <Link
               href="/search"
               aria-label="Search"
-              className="md:hidden grid place-items-center h-10 w-10 rounded-xl text-lg hover:bg-black/5 dark:hover:bg-white/5 transition active:scale-95"
+              className="md:hidden grid place-items-center h-10 w-10 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5 transition active:scale-95"
             >
-              🔍
+              <Search className="h-5 w-5" />
             </Link>
             <ThemeToggle />
             <button
               aria-label="Notifications"
-              className="relative grid place-items-center h-10 w-10 rounded-xl text-lg hover:bg-black/5 dark:hover:bg-white/5 transition active:scale-95"
+              className="relative grid place-items-center h-10 w-10 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5 transition active:scale-95"
             >
-              🔔
+              <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-900" />
             </button>
             <button
               aria-label="Account"
-              className="grid place-items-center h-10 w-10 rounded-xl bg-gradient-to-br from-gray-200 to-gray-300 dark:from-zinc-700 dark:to-zinc-800 text-sm font-bold text-gray-600 dark:text-zinc-200 transition active:scale-95"
+              className="grid place-items-center h-10 w-10 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 text-xs font-bold text-zinc-600 dark:text-zinc-200 transition active:scale-95"
             >
               AC
             </button>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatMatchDate, formatMatchTime, getStatusLabel } from "@/lib/utils/match";
+import { SportIcon } from "@/components/ui/SportIcon";
 import type { Match, Season, Sport, Team } from "@/lib/supabase/types";
 
 const MATCH_SELECT = `
@@ -145,12 +146,15 @@ function PageHeader({
   active: "standings" | "fixtures";
 }) {
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
       <div>
-        <p className="text-sm text-gray-400">{season.name}</p>
-        <h1 className="text-2xl font-bold">{sport.icon} {sport.name} Fixtures</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400">{season.name}</p>
+        <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
+          <SportIcon slug={sport.slug} className="h-8 w-8 text-red-600 dark:text-red-500" />
+          {sport.name} Fixtures
+        </h1>
       </div>
-      <div className="flex gap-2">
+      <div className="flex gap-2.5">
         <Link href={`/standings/${sport.slug}`} className={`sport-pill ${active === "standings" ? "sport-pill-active" : "sport-pill-inactive"}`}>Standings</Link>
         <Link href={`/fixtures/${sport.slug}`} className={`sport-pill ${active === "fixtures" ? "sport-pill-active" : "sport-pill-inactive"}`}>Fixtures</Link>
       </div>
@@ -160,7 +164,14 @@ function PageHeader({
 
 function FilterLink({ label, href, active }: { label: string; href: string; active: boolean }) {
   return (
-    <Link href={href} className={`shrink-0 px-3 py-1 rounded-full text-sm font-medium transition-colors ${active ? "bg-brand-blue text-white" : "bg-white border border-gray-100 text-gray-600 hover:bg-gray-50"}`}>
+    <Link
+      href={href}
+      className={`shrink-0 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${
+        active
+          ? "bg-red-600 text-white shadow-md shadow-red-600/25"
+          : "bg-white/70 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800"
+      }`}
+    >
       {label}
     </Link>
   );
@@ -168,9 +179,11 @@ function FilterLink({ label, href, active }: { label: string; href: string; acti
 
 function EmptyState({ sport, message }: { sport: Sport; message: string }) {
   return (
-    <div className="text-center py-16 text-gray-400">
-      <div className="text-4xl mb-3">{sport.icon}</div>
-      <p className="font-medium">{message}</p>
+    <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl py-16 text-center shadow-lg">
+      <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-red-500/10 text-red-600 dark:text-red-500">
+        <SportIcon slug={sport.slug} className="h-8 w-8" />
+      </div>
+      <p className="font-medium text-zinc-500 dark:text-zinc-400">{message}</p>
     </div>
   );
 }

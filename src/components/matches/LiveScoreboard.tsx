@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { Radio } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { MatchCard } from "./MatchCard";
 import type { Match } from "@/lib/supabase/types";
@@ -36,10 +37,10 @@ export function LiveScoreboard({ initialLive, sportSlug }: Props) {
   return (
     <section>
       <div className="flex items-center gap-2.5 mb-3.5 px-0.5">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-500 text-white text-[11px] font-bold px-2.5 py-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> LIVE NOW
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-red-600 text-white text-[11px] font-bold px-2.5 py-1">
+          <Radio className="h-3.5 w-3.5 animate-pulse" /> LIVE NOW
         </span>
-        <span className="rounded-full bg-red-100 dark:bg-red-950 text-red-600 dark:text-red-300 text-xs font-bold px-2 py-0.5">
+        <span className="rounded-full bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-300 text-xs font-bold px-2 py-0.5">
           {liveMatches.length}
         </span>
       </div>

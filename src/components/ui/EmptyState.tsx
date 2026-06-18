@@ -1,19 +1,21 @@
+import { CalendarX, type LucideIcon } from "lucide-react";
+
 export function EmptyState({
-  icon = "🏆",
+  Icon = CalendarX,
   title,
   message,
 }: {
-  icon?: string;
+  Icon?: LucideIcon;
   title: string;
   message?: string;
 }) {
   return (
-    <div className="glass rounded-3xl px-6 py-14 text-center">
-      <div className="mx-auto mb-4 grid place-items-center h-20 w-20 rounded-3xl bg-gradient-to-br from-blue-500/10 to-indigo-500/10 text-4xl">
-        {icon}
+    <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl px-6 py-14 text-center shadow-lg">
+      <div className="mx-auto mb-4 grid place-items-center h-20 w-20 rounded-3xl bg-gradient-to-br from-red-500/10 to-red-700/10 text-red-600 dark:text-red-500">
+        <Icon className="h-9 w-9" strokeWidth={1.75} />
       </div>
-      <p className="font-bold text-gray-800 dark:text-zinc-100">{title}</p>
-      {message && <p className="mt-1 text-sm text-gray-500 dark:text-zinc-400 max-w-xs mx-auto">{message}</p>}
+      <p className="font-bold text-zinc-800 dark:text-zinc-100">{title}</p>
+      {message && <p className="mt-1 text-sm text-zinc-500 dark:text-zinc-400 max-w-xs mx-auto">{message}</p>}
     </div>
   );
 }

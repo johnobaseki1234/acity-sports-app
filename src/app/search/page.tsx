@@ -3,6 +3,16 @@
 import { useEffect, useMemo, useState } from "react";
 import { createClient } from "../../lib/supabase/client";
 import Link from "next/link";
+import {
+  Search as SearchIcon,
+  SearchX,
+  Loader2,
+  Shield,
+  UserRound,
+  MapPin,
+  type LucideIcon,
+} from "lucide-react";
+import { EmptyState } from "@/components/ui/EmptyState";
 import type { MatchStatus } from "../../lib/supabase/types";
 
 type TeamResult = {
@@ -117,92 +127,116 @@ export default function SearchPage() {
     return () => clearTimeout(delayDebounceId);
   }, [query, supabase]);
 
-  return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Global Search</h1>
+  const hasResults =
+    results.teams.length + results.players.length + results.matches.length > 0;
 
-      <div className="relative mb-4">
+  return (
+    <div className="space-y-7">
+      <div>
+        <h1 className="text-4xl font-black tracking-tight text-zinc-900 dark:text-white">Search</h1>
+        <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">Teams, players and match venues across every league.</p>
+      </div>
+
+      <div className="relative">
+        <SearchIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-400" />
         <input
           type="text"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Search teams, players, or match venues..."
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition text-gray-700 bg-white"
+          autoFocus
+          placeholder="Search teams, players, or venues…"
+          className="w-full h-14 pl-12 pr-12 rounded-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 shadow-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all duration-300 text-zinc-800 dark:text-zinc-100 font-medium"
         />
-        {loading && (
-          <div className="absolute right-4 top-3.5 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600" />
-          </div>
-        )}
+        {loading && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-600 animate-spin" />}
       </div>
 
-      {error && <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2 mb-6">{error}</div>}
+      {error && (
+        <div className="text-sm text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-500/20 rounded-2xl px-4 py-3">{error}</div>
+      )}
 
       {query.trim().length < 2 ? (
-        <p className="text-gray-400 text-sm text-center py-8">Type at least 2 characters to start searching.</p>
+        <EmptyState Icon={SearchIcon} title="Start typing to search" message="Enter at least 2 characters to find teams, players and venues." />
+      ) : !hasResults ? (
+        <EmptyState Icon={SearchX} title="No results found" message={`Nothing matched “${query.trim()}”. Try a different term.`} />
       ) : (
-        <div className="space-y-8">
-          <div>
-            <h2 className="text-lg font-bold text-gray-700 border-b pb-2 mb-3">Teams</h2>
-            {results.teams.length === 0 ? (
-              <p className="text-gray-500 text-sm italic">No teams match your search.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {results.teams.map((team) => (
-                  <Link href={`/team/${team.slug}`} key={team.id} className="p-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-blue-400 transition block">
-                    <span className="font-semibold text-gray-800 block">{team.name}</span>
-                    <span className="text-xs text-gray-400 uppercase tracking-wider">{team.short_name}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="space-y-7">
+          <ResultSection Icon={Shield} title="Teams" count={results.teams.length}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {results.teams.map((team) => (
+                <Link key={team.id} href={`/team/${team.slug}`} className="score-card flex items-center gap-3">
+                  <span className="grid place-items-center h-10 w-10 rounded-2xl bg-red-600 text-white text-[11px] font-black shrink-0">
+                    {team.short_name?.slice(0, 3).toUpperCase()}
+                  </span>
+                  <span className="min-w-0">
+                    <span className="font-bold text-zinc-800 dark:text-zinc-100 block truncate">{team.name}</span>
+                    <span className="text-xs text-zinc-400 uppercase tracking-wider">{team.short_name}</span>
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </ResultSection>
 
-          <div>
-            <h2 className="text-lg font-bold text-gray-700 border-b pb-2 mb-3">Players</h2>
-            {results.players.length === 0 ? (
-              <p className="text-gray-500 text-sm italic">No players match your search.</p>
-            ) : (
-              <div className="space-y-2">
-                {results.players.map((player) => (
-                  <Link href={`/player/${player.id}`} key={player.id} className="p-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-blue-400 transition flex justify-between items-center gap-3">
-                    <div className="min-w-0">
-                      <span className="font-medium text-gray-800 mr-2">#{player.jersey_number}</span>
-                      <span className="text-gray-700 font-medium">{player.name}</span>
-                    </div>
-                    <span className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded border shrink-0">
-                      {player.team?.name || "No Team"}
+          <ResultSection Icon={UserRound} title="Players" count={results.players.length}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {results.players.map((player) => (
+                <Link key={player.id} href={`/player/${player.id}`} className="score-card flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <span className="grid place-items-center h-10 w-10 rounded-full bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-300 text-xs font-bold shrink-0">
+                      #{player.jersey_number}
                     </span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-100 truncate">{player.name}</span>
+                  </div>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-800 px-2 py-1 rounded-lg shrink-0">
+                    {player.team?.name || "No Team"}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </ResultSection>
 
-          <div>
-            <h2 className="text-lg font-bold text-gray-700 border-b pb-2 mb-3">Match Venues</h2>
-            {results.matches.length === 0 ? (
-              <p className="text-gray-500 text-sm italic">No matching venues found.</p>
-            ) : (
-              <div className="space-y-2">
-                {results.matches.map((match) => (
-                  <Link href={`/match/${match.id}`} key={match.id} className="p-3 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-blue-400 transition flex justify-between items-center gap-3 text-sm">
-                    <div className="min-w-0">
-                      <span className="text-gray-700 block">
-                        <strong>{match.home_team?.short_name}</strong> vs <strong>{match.away_team?.short_name}</strong>
-                      </span>
-                      <span className="text-xs text-gray-400">{match.venue}</span>
-                    </div>
-                    <span className="text-xs font-semibold px-2 py-0.5 bg-gray-100 text-gray-600 rounded capitalize shrink-0">
-                      {match.status}
+          <ResultSection Icon={MapPin} title="Match Venues" count={results.matches.length}>
+            <div className="space-y-3">
+              {results.matches.map((match) => (
+                <Link key={match.id} href={`/match/${match.id}`} className="score-card flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="font-semibold text-zinc-800 dark:text-zinc-100 block">
+                      {match.home_team?.short_name} <span className="text-zinc-400 font-normal">vs</span> {match.away_team?.short_name}
                     </span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+                    <span className="text-xs text-zinc-400 flex items-center gap-1"><MapPin className="h-3 w-3" /> {match.venue}</span>
+                  </div>
+                  <span className="text-[11px] font-bold uppercase px-2.5 py-1 bg-zinc-100 dark:bg-zinc-800 text-zinc-500 dark:text-zinc-300 rounded-full shrink-0">
+                    {match.status}
+                  </span>
+                </Link>
+              ))}
+            </div>
+          </ResultSection>
         </div>
       )}
     </div>
+  );
+}
+
+function ResultSection({
+  Icon,
+  title,
+  count,
+  children,
+}: {
+  Icon: LucideIcon;
+  title: string;
+  count: number;
+  children: React.ReactNode;
+}) {
+  if (count === 0) return null;
+  return (
+    <section>
+      <div className="flex items-center gap-2 mb-3 px-0.5">
+        <Icon className="h-5 w-5 text-red-600 dark:text-red-500" strokeWidth={2.25} />
+        <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{title}</h2>
+        <span className="rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 text-xs font-bold px-2 py-0.5">{count}</span>
+      </div>
+      {children}
+    </section>
   );
 }

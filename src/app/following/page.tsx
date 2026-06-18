@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Star, ArrowRight } from "lucide-react";
 import { useFollowedTeams } from "@/hooks/useFollowedTeams";
 import { EmptyState } from "@/components/ui/EmptyState";
 
@@ -9,33 +10,38 @@ export default function FollowingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-black tracking-tight text-gray-900 dark:text-white">⭐ Following</h1>
-        <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
-          Teams you follow — quick access to their fixtures and results.
-        </p>
+      <div className="flex items-center gap-2.5">
+        <Star className="h-6 w-6 text-red-600 dark:text-red-500" strokeWidth={2.25} />
+        <div>
+          <h1 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white">Following</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Teams you follow — quick access to their fixtures and results.
+          </p>
+        </div>
       </div>
 
       {followedTeams.length === 0 ? (
         <EmptyState
-          icon="⭐"
+          Icon={Star}
           title="You're not following any teams yet"
-          message="Open a team page and tap “Follow Team” to keep their matches close at hand."
+          message="Open a team page and tap Follow Team to keep their matches close at hand."
         />
       ) : (
-        <div className="glass rounded-3xl p-6 text-center">
-          <div className="text-4xl mb-2">⭐</div>
-          <p className="font-bold text-gray-800 dark:text-zinc-100">
+        <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl p-6 text-center shadow-lg">
+          <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-gradient-to-br from-red-500/10 to-red-700/10 text-red-600 dark:text-red-500">
+            <Star className="h-8 w-8" strokeWidth={1.75} />
+          </div>
+          <p className="font-bold text-zinc-800 dark:text-zinc-100">
             Following {followedTeams.length} team{followedTeams.length === 1 ? "" : "s"}
           </p>
-          <p className="text-sm text-gray-500 dark:text-zinc-400 mt-1">
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
             Browse the latest scores and standings from the home feed.
           </p>
           <Link
             href="/"
-            className="mt-5 inline-flex items-center gap-2 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-5 py-2.5 shadow-lg shadow-blue-600/20 transition active:scale-95"
+            className="mt-5 inline-flex items-center gap-2 h-12 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm px-5 shadow-lg shadow-red-600/20 transition-all duration-300 active:scale-95"
           >
-            Go to scores →
+            Go to scores <ArrowRight className="h-4 w-4" />
           </Link>
         </div>
       )}

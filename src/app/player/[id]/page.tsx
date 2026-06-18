@@ -168,7 +168,7 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
       {player.team && (
         <Link
           href={`/team/${player.team.slug}`}
-          className="text-sm text-blue-600 dark:text-blue-400 hover:underline inline-flex items-center mb-6 font-medium"
+          className="text-sm text-red-600 dark:text-red-400 hover:underline inline-flex items-center mb-6 font-medium"
         >
           ← Back to {player.team.name}
         </Link>

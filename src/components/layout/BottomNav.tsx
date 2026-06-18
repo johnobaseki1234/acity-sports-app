@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Home, Search, Calendar, Trophy, User, type LucideIcon } from "lucide-react";
 
-const ITEMS = [
-  { label: "Home", icon: "🏠", href: "/", match: (p: string) => p === "/" },
-  { label: "Search", icon: "🔍", href: "/search", match: (p: string) => p.startsWith("/search") },
-  { label: "Fixtures", icon: "📅", href: "/fixtures/basketball", match: (p: string) => p.startsWith("/fixtures") },
-  { label: "Standings", icon: "🏆", href: "/standings/basketball", match: (p: string) => p.startsWith("/standings") },
-  { label: "Profile", icon: "👤", href: "/following", match: (p: string) => p.startsWith("/following") },
+const ITEMS: { label: string; Icon: LucideIcon; href: string; match: (p: string) => boolean }[] = [
+  { label: "Home", Icon: Home, href: "/", match: (p) => p === "/" },
+  { label: "Search", Icon: Search, href: "/search", match: (p) => p.startsWith("/search") },
+  { label: "Fixtures", Icon: Calendar, href: "/fixtures/basketball", match: (p) => p.startsWith("/fixtures") },
+  { label: "Standings", Icon: Trophy, href: "/standings/basketball", match: (p) => p.startsWith("/standings") },
+  { label: "Profile", Icon: User, href: "/following", match: (p) => p.startsWith("/following") },
 ];
 
 export default function BottomNav() {
@@ -17,32 +18,33 @@ export default function BottomNav() {
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 pb-safe">
-      <div className="mx-3 mb-2 glass-strong rounded-3xl shadow-xl shadow-black/5">
+      <div className="mx-3 mb-2 glass-strong rounded-3xl shadow-xl shadow-black/10">
         <div className="grid grid-cols-5">
-          {ITEMS.map((item) => {
-            const active = item.match(pathname);
+          {ITEMS.map(({ label, Icon, href, match }) => {
+            const active = match(pathname);
             return (
               <Link
-                key={item.label}
-                href={item.href}
-                aria-label={item.label}
+                key={label}
+                href={href}
+                aria-label={label}
                 aria-current={active ? "page" : undefined}
                 className="relative flex flex-col items-center justify-center gap-1 min-h-[56px] py-2 transition active:scale-95"
               >
-                {active && (
-                  <span className="absolute top-1.5 h-1 w-8 rounded-full bg-blue-600 transition-all" />
-                )}
-                <span
-                  className={`text-xl transition-transform ${active ? "scale-110" : "opacity-70"}`}
-                >
-                  {item.icon}
-                </span>
+                {active && <span className="absolute top-1.5 h-1 w-8 rounded-full bg-red-600 transition-all" />}
+                <Icon
+                  className={`h-[22px] w-[22px] transition-all ${
+                    active
+                      ? "text-red-600 dark:text-red-500 scale-110"
+                      : "text-zinc-400 dark:text-zinc-500"
+                  }`}
+                  strokeWidth={active ? 2.5 : 2}
+                />
                 <span
                   className={`text-[10px] font-semibold ${
-                    active ? "text-blue-600 dark:text-blue-400" : "text-gray-400 dark:text-zinc-500"
+                    active ? "text-red-600 dark:text-red-500" : "text-zinc-400 dark:text-zinc-500"
                   }`}
                 >
-                  {item.label}
+                  {label}
                 </span>
               </Link>
             );
