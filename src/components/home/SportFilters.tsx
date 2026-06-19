@@ -1,23 +1,21 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Sparkles, CircleDot, Circle, Volleyball, type LucideIcon } from "lucide-react";
+import { Sparkles } from "lucide-react";
+import { SportIcon } from "@/components/ui/SportIcon";
 
-const SPORTS: { label: string; Icon: LucideIcon; href: string; match: (p: string) => boolean }[] = [
-  { label: "All", Icon: Sparkles, href: "/", match: (p) => p === "/" },
-  { label: "Football", Icon: CircleDot, href: "/sport/football", match: (p) => p.startsWith("/sport/football") },
-  { label: "Basketball", Icon: Circle, href: "/sport/basketball", match: (p) => p.startsWith("/sport/basketball") },
-  { label: "Volleyball", Icon: Volleyball, href: "/sport/volleyball", match: (p) => p.startsWith("/sport/volleyball") },
-];
+const SPORTS = [
+  { label: "All",        slug: null,         href: "/" },
+  { label: "Football",   slug: "football",   href: "/?sport=football" },
+  { label: "Basketball", slug: "basketball", href: "/?sport=basketball" },
+  { label: "Volleyball", slug: "volleyball", href: "/?sport=volleyball" },
+] as const;
 
-export function SportFilters() {
-  const pathname = usePathname();
-
+export function SportFilters({ activeSport }: { activeSport?: string }) {
   return (
     <div className="flex gap-3 overflow-x-auto scrollbar-hide -mx-1 px-1 py-1">
-      {SPORTS.map(({ label, Icon, href, match }) => {
-        const active = match(pathname);
+      {SPORTS.map(({ label, slug, href }) => {
+        const active = slug === null ? !activeSport : activeSport === slug;
         return (
           <Link
             key={label}
@@ -28,7 +26,11 @@ export function SportFilters() {
                 : "glass text-zinc-600 dark:text-zinc-300 hover:scale-105 hover:shadow-md"
             }`}
           >
-            <Icon className="h-5 w-5" strokeWidth={2.25} />
+            {slug === null ? (
+              <Sparkles className="h-5 w-5" strokeWidth={2.25} />
+            ) : (
+              <SportIcon slug={slug} className="h-5 w-5" strokeWidth={2.25} />
+            )}
             {label}
           </Link>
         );

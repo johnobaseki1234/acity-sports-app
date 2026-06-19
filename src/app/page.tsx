@@ -31,12 +31,23 @@ async function getMatches() {
   return (data ?? []) as Match[];
 }
 
-export default async function HomePage() {
-  const matches = await getMatches();
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ sport?: string }>;
+}) {
+  const [matches, { sport: selectedSport }] = await Promise.all([
+    getMatches(),
+    searchParams,
+  ]);
 
-  const live = matches.filter((m) => m.status === "live" || m.status === "halftime");
-  const upcoming = matches.filter((m) => m.status === "scheduled");
-  const recent = matches.filter((m) => m.status === "finished").slice(-6).reverse();
+  const filtered = selectedSport
+    ? matches.filter((m) => (m.season as any)?.sport?.slug === selectedSport)
+    : matches;
+
+  const live = filtered.filter((m) => m.status === "live" || m.status === "halftime");
+  const upcoming = filtered.filter((m) => m.status === "scheduled");
+  const recent = filtered.filter((m) => m.status === "finished").slice(-6).reverse();
 
   const todayCount = matches.filter((m) => formatMatchDate(m.scheduled_at) === "Today").length;
   const seasonName = matches[0]?.season?.name ?? "—";
@@ -48,11 +59,11 @@ export default async function HomePage() {
       </Reveal>
 
       <Reveal delay={0.05}>
-        <SportFilters />
+        <SportFilters activeSport={selectedSport} />
       </Reveal>
 
       {/* Live Now — realtime client component */}
-      <LiveScoreboard initialLive={live} />
+      <LiveScoreboard initialLive={live} sportSlug={selectedSport} />
 
       {/* Upcoming */}
       {upcoming.length > 0 && (
@@ -76,7 +87,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {matches.length === 0 && (
+      {filtered.length === 0 && (
         <Reveal>
           <EmptyState
             Icon={CalendarX}

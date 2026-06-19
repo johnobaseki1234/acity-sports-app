@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatMatchDate, formatMatchTime, getStatusLabel } from "@/lib/utils/match";
 import { SportIcon } from "@/components/ui/SportIcon";
+import { Sparkles } from "lucide-react";
 import type { Match, Season, Sport, Team } from "@/lib/supabase/types";
 
 const MATCH_SELECT = `
@@ -11,6 +12,20 @@ const MATCH_SELECT = `
   away_team:teams!matches_away_team_id_fkey(*),
   season:seasons(*, sport:sports(*))
 `;
+
+const SPORT_SWITCHER = [
+  { label: "All",        slug: null,         href: "/fixtures" },
+  { label: "Football",   slug: "football",   href: "/fixtures/football" },
+  { label: "Basketball", slug: "basketball", href: "/fixtures/basketball" },
+  { label: "Volleyball", slug: "volleyball", href: "/fixtures/volleyball" },
+] as const;
+
+const STATUS_FILTERS = [
+  { label: "All",      value: "all" },
+  { label: "Upcoming", value: "scheduled" },
+  { label: "Live",     value: "live" },
+  { label: "Results",  value: "finished" },
+] as const;
 
 export default async function FixturesPage({
   params,
@@ -38,7 +53,12 @@ export default async function FixturesPage({
     .single();
 
   if (!season) {
-    return <EmptyState sport={sport as Sport} message="No active season yet" />;
+    return (
+      <div className="space-y-5">
+        <PageHeader sport={sport as Sport} activeSportSlug={sportSlug} />
+        <SportEmptyState sport={sport as Sport} message="No active season yet" />
+      </div>
+    );
   }
 
   const [{ data: seasonTeams }, { data: matches }] = await Promise.all([
@@ -53,16 +73,24 @@ export default async function FixturesPage({
       .order("scheduled_at", { ascending: true }),
   ]);
 
-  const teams = (seasonTeams ?? [])
-    .map((row) => row.team)
-    .filter(Boolean) as unknown as Team[];
+  const teams = (seasonTeams ?? []).map((row) => row.team).filter(Boolean) as unknown as Team[];
+
   const selectedStatus = filters.status ?? "all";
   const selectedTeam = filters.team ?? "all";
+
   const filteredMatches = ((matches ?? []) as Match[]).filter((match) => {
-    const statusMatches = selectedStatus === "all" || match.status === selectedStatus;
-    const teamMatches = selectedTeam === "all" || match.home_team_id === selectedTeam || match.away_team_id === selectedTeam;
-    return statusMatches && teamMatches;
+    const statusOk =
+      selectedStatus === "all" ||
+      (selectedStatus === "live"
+        ? match.status === "live" || match.status === "halftime"
+        : match.status === selectedStatus);
+    const teamOk =
+      selectedTeam === "all" ||
+      match.home_team_id === selectedTeam ||
+      match.away_team_id === selectedTeam;
+    return statusOk && teamOk;
   });
+
   const grouped = filteredMatches.reduce<Record<string, Match[]>>((acc, match) => {
     const key = formatMatchDate(match.scheduled_at);
     (acc[key] ??= []).push(match);
@@ -71,94 +99,163 @@ export default async function FixturesPage({
 
   return (
     <div className="space-y-5">
-      <PageHeader sport={sport as Sport} season={season as Season} active="fixtures" />
+      {/* Tier 1: Sport Switcher + Page Title */}
+      <PageHeader sport={sport as Sport} season={season as Season} activeSportSlug={sportSlug} />
 
-      <div className="flex gap-2 overflow-x-auto pb-1">
-        <FilterLink label="All" href={`/fixtures/${sportSlug}`} active={selectedStatus === "all" && selectedTeam === "all"} />
-        <FilterLink label="Upcoming" href={`/fixtures/${sportSlug}?status=scheduled`} active={selectedStatus === "scheduled"} />
-        <FilterLink label="Live" href={`/fixtures/${sportSlug}?status=live`} active={selectedStatus === "live"} />
-        <FilterLink label="Results" href={`/fixtures/${sportSlug}?status=finished`} active={selectedStatus === "finished"} />
+      {/* Tier 2: Status Pills */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+        {STATUS_FILTERS.map(({ label, value }) => {
+          const href = buildHref(sportSlug, value === "all" ? undefined : value, selectedTeam === "all" ? undefined : selectedTeam);
+          return (
+            <FilterLink
+              key={value}
+              label={label}
+              href={href}
+              active={selectedStatus === value}
+            />
+          );
+        })}
       </div>
 
+      {/* Tier 3: Team Pills */}
       {teams.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          <FilterLink label="All teams" href={`/fixtures/${sportSlug}${selectedStatus === "all" ? "" : `?status=${selectedStatus}`}`} active={selectedTeam === "all"} />
-          {teams.map((team) => {
-            const params = new URLSearchParams();
-            if (selectedStatus !== "all") params.set("status", selectedStatus);
-            params.set("team", team.id);
-            return (
-              <FilterLink
-                key={team.id}
-                label={team.short_name}
-                href={`/fixtures/${sportSlug}?${params.toString()}`}
-                active={selectedTeam === team.id}
-              />
-            );
-          })}
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+          <FilterLink
+            label="All Teams"
+            href={buildHref(sportSlug, selectedStatus === "all" ? undefined : selectedStatus, undefined)}
+            active={selectedTeam === "all"}
+          />
+          {teams.map((team) => (
+            <FilterLink
+              key={team.id}
+              label={team.short_name}
+              href={buildHref(sportSlug, selectedStatus === "all" ? undefined : selectedStatus, team.id)}
+              active={selectedTeam === team.id}
+            />
+          ))}
         </div>
       )}
 
+      {/* Match list */}
       <div className="space-y-5">
         {Object.entries(grouped).map(([date, dayMatches]) => (
           <section key={date}>
-            <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 mb-2">{date}</h2>
+            <h2 className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-zinc-500 mb-2">
+              {date}
+            </h2>
             <div className="space-y-3">
-              {dayMatches.map((match) => <FixtureRow key={match.id} match={match} />)}
+              {dayMatches.map((match) => (
+                <FixtureRow key={match.id} match={match} />
+              ))}
             </div>
           </section>
         ))}
       </div>
 
-      {filteredMatches.length === 0 && <EmptyState sport={sport as Sport} message="No fixtures match these filters" />}
+      {filteredMatches.length === 0 && (
+        <SportEmptyState sport={sport as Sport} message="No fixtures match these filters" />
+      )}
     </div>
   );
 }
 
-function FixtureRow({ match }: { match: Match }) {
-  const showScore = match.status === "live" || match.status === "halftime" || match.status === "finished";
-
-  return (
-    <Link href={`/match/${match.id}`} className="score-card block">
-      <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
-        <span>{formatMatchTime(match.scheduled_at)} · {match.venue}</span>
-        <span className="font-semibold">{getStatusLabel(match.status)}</span>
-      </div>
-      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-        <div className="text-right font-semibold">{match.home_team?.name}</div>
-        <div className="text-center font-black tabular-nums text-lg min-w-16">
-          {showScore ? `${match.home_score} - ${match.away_score}` : "vs"}
-        </div>
-        <div className="font-semibold">{match.away_team?.name}</div>
-      </div>
-      {match.matchday && <div className="mt-2 text-center text-xs text-gray-400">Matchday {match.matchday}</div>}
-    </Link>
-  );
+function buildHref(sportSlug: string, status?: string, team?: string) {
+  const p = new URLSearchParams();
+  if (status) p.set("status", status);
+  if (team) p.set("team", team);
+  const qs = p.toString();
+  return `/fixtures/${sportSlug}${qs ? `?${qs}` : ""}`;
 }
 
 function PageHeader({
   sport,
   season,
-  active,
+  activeSportSlug,
 }: {
   sport: Sport;
-  season: Season;
-  active: "standings" | "fixtures";
+  season?: Season;
+  activeSportSlug: string;
 }) {
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">{season.name}</p>
+        {season && (
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">{season.name}</p>
+        )}
         <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
           <SportIcon slug={sport.slug} className="h-8 w-8 text-red-600 dark:text-red-500" />
           {sport.name} Fixtures
         </h1>
       </div>
-      <div className="flex gap-2.5">
-        <Link href={`/standings/${sport.slug}`} className={`sport-pill ${active === "standings" ? "sport-pill-active" : "sport-pill-inactive"}`}>Standings</Link>
-        <Link href={`/fixtures/${sport.slug}`} className={`sport-pill ${active === "fixtures" ? "sport-pill-active" : "sport-pill-inactive"}`}>Fixtures</Link>
+      {/* Sport Switcher */}
+      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+        {SPORT_SWITCHER.map(({ label, slug, href }) => (
+          <SportSwitcherPill
+            key={label}
+            label={label}
+            slug={slug ?? undefined}
+            href={href}
+            active={slug === activeSportSlug}
+          />
+        ))}
       </div>
     </div>
+  );
+}
+
+function FixtureRow({ match }: { match: Match }) {
+  const showScore =
+    match.status === "live" || match.status === "halftime" || match.status === "finished";
+
+  return (
+    <Link href={`/match/${match.id}`} className="score-card block">
+      <div className="flex items-center justify-between text-xs text-gray-400 mb-3">
+        <span>
+          {formatMatchTime(match.scheduled_at)} · {match.venue}
+        </span>
+        <span className="font-semibold">{getStatusLabel(match.status)}</span>
+      </div>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="text-right font-semibold">{match.home_team?.name}</div>
+        <div className="text-center font-black tabular-nums text-lg min-w-16">
+          {showScore ? `${match.home_score} – ${match.away_score}` : "vs"}
+        </div>
+        <div className="font-semibold">{match.away_team?.name}</div>
+      </div>
+      {match.matchday && (
+        <div className="mt-2 text-center text-xs text-gray-400">Matchday {match.matchday}</div>
+      )}
+    </Link>
+  );
+}
+
+function SportSwitcherPill({
+  label,
+  slug,
+  href,
+  active,
+}: {
+  label: string;
+  slug?: string;
+  href: string;
+  active: boolean;
+}) {
+  return (
+    <Link
+      href={href}
+      className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 ${
+        active
+          ? "bg-red-600 text-white shadow-md shadow-red-600/25"
+          : "bg-white/70 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800"
+      }`}
+    >
+      {slug ? (
+        <SportIcon slug={slug} className="h-4 w-4" strokeWidth={2.25} />
+      ) : (
+        <Sparkles className="h-4 w-4" strokeWidth={2.25} />
+      )}
+      {label}
+    </Link>
   );
 }
 
@@ -177,7 +274,7 @@ function FilterLink({ label, href, active }: { label: string; href: string; acti
   );
 }
 
-function EmptyState({ sport, message }: { sport: Sport; message: string }) {
+function SportEmptyState({ sport, message }: { sport: Sport; message: string }) {
   return (
     <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl py-16 text-center shadow-lg">
       <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-red-500/10 text-red-600 dark:text-red-500">
