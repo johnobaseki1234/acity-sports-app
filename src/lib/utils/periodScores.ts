@@ -33,7 +33,8 @@ export function computePeriodScores({
     const points = scoringRules[event.event_type];
     if (points == null) continue;
 
-    const row = scores.get(event.period);
+    const period = event.period ?? 1;
+    const row = scores.get(period);
     if (!row) continue;
 
     if (event.team_id === homeTeamId) row.home += points;

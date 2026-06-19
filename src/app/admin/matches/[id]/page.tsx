@@ -1,26 +1,60 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
-import { MatchForm } from "@/components/admin/MatchForm";
-import type { Match, Season, Team } from "@/lib/supabase/types";
+import { ScorerConsole } from "@/components/scorer/ScorerConsole"; // Adjust path to your console component
 
-export default async function EditMatchPage({ params }: { params: Promise<{ id: string }> }) {
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+export default async function ScorerPage({ params }: PageProps) {
   const { id } = await params;
   const supabase = await createClient();
-  const [{ data: match }, { data: seasons }, { data: teams }] = await Promise.all([
-    supabase.from("matches").select("*").eq("id", id).single(),
-    supabase.from("seasons").select("*, sport:sports(*)").order("name"),
-    supabase.from("teams").select("*").order("name"),
-  ]);
-  if (!match) notFound();
+
+  // 1. Fetch match metadata, associated teams, and seasons
+  const { data: match } = await supabase
+    .from("matches")
+    .select(`
+      *,
+      home_team:teams!matches_home_team_id_fkey(*),
+      away_team:teams!matches_away_team_id_fkey(*),
+      season:seasons(*)
+    `)
+    .eq("id", id)
+    .single();
+
+  if (!match) {
+    notFound();
+  }
+
+  // 2. Fetch the sport configurations and layout properties
+  const { data: sport } = await supabase
+    .from("sports")
+    .select("*")
+    .eq("id", match.sport_id)
+    .single();
+
+  if (!sport) {
+    notFound();
+  }
+
+  // 3. Fetch players assigned to the home team roster
+  const { data: homePlayers } = await supabase
+    .from("players")
+    .select("*")
+    .eq("team_id", match.home_team_id);
+
+  // 4. Fetch players assigned to the away team roster
+  const { data: awayPlayers } = await supabase
+    .from("players")
+    .select("*")
+    .eq("team_id", match.away_team_id);
 
   return (
-    <div className="max-w-lg">
-      <h1 className="text-2xl font-bold mb-6">Edit Match</h1>
-      <MatchForm
-        match={match as Match}
-        seasons={(seasons ?? []) as Season[]}
-        teams={(teams ?? []) as Team[]}
-      />
-    </div>
+    <ScorerConsole
+      match={match}
+      sport={sport}
+      homePlayers={homePlayers ?? []}
+      awayPlayers={awayPlayers ?? []}
+    />
   );
 }

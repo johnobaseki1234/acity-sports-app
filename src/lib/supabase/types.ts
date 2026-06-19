@@ -141,3 +141,85 @@ export type AdminUser = {
   name: string;
   created_at: string;
 };
+
+export type CompetitionType = "league" | "cup" | "super_cup";
+
+export type Competition = {
+  id: string;
+  name: string;
+  season_id: string;
+  sport_id: string;
+  type: CompetitionType;
+  created_at: string;
+};
+
+export type FormationPosition = {
+  role: string;
+  x: number;
+  y: number;
+};
+
+export type Formation = {
+  id: string;
+  sport_id: string;
+  name: string;
+  positions: FormationPosition[];
+  created_at: string;
+};
+
+export type LineupEntry = {
+  id: string;
+  match_id: string;
+  team_id: string;
+  player_id: string;
+  role: string;
+  x: number;
+  y: number;
+  is_starter: boolean;
+  created_at: string;
+};
+
+export type CompetitionMatch = {
+  id: string;
+  competition_id: string;
+  home_team_id: string;
+  away_team_id: string;
+  week: number | null;
+  round: string | null;
+  status: MatchStatus;
+  scheduled_at: string | null;
+  created_at: string;
+
+  home_team?: Team;
+  away_team?: Team;
+  competition?: Competition;
+};
+
+export type PlayerMatchStats = {
+  id: string;
+  match_id: string;
+  player_id: string;
+
+  points: number;
+
+  fg2_made: number;
+  fg2_attempts: number;
+
+  fg3_made: number;
+  fg3_attempts: number;
+
+  rebounds: number;
+  assists: number;
+  steals: number;
+  turnovers: number;
+
+  goals: number;
+  yellow_cards: number;
+  red_cards: number;
+  saves: number;
+  clean_sheet: boolean;
+
+  created_at: string;
+
+  player?: Player;
+};

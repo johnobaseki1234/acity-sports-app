@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Play, Pause, Square, Undo2, Zap } from "lucide-react";
+import { ChevronLeft, Play, Pause, Square, Undo2, Zap, Check, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Match, Player, Sport, EventTypeConfig, MatchEvent } from "@/lib/supabase/types";
 import { computePeriodScores } from "@/lib/utils/periodScores";
@@ -22,6 +22,7 @@ type PendingEvent = {
   eventType: EventTypeConfig;
   teamId: string;
   side: "home" | "away";
+  isMissed?: boolean;
 };
 
 export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPlayers }: Props) {
@@ -33,16 +34,29 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
   const [pending, setPending] = useState<PendingEvent | null>(null);
   const [saving, setSaving] = useState(false);
   const [minuteInput, setMinuteInput] = useState("");
+  
+  // Basketball 2-Stage Scoring UI States
+  const [basketballIntent, setBasketballIntent] = useState<{
+    eventType: EventTypeConfig;
+    teamId: string;
+    side: "home" | "away";
+  } | null>(null);
+
+  // Safe configurations with robust fallbacks to resolve any missing properties/types
+  const sportPeriodsCount = (sport?.periods as any)?.count ?? 4;
+  const sportPeriodsName = (sport?.periods as any)?.name ?? "period";
+  const sportEventTypes = (sport?.event_types as EventTypeConfig[]) ?? [];
+  const sportScoringRules = (sport as any)?.scoring_rules ?? {};
 
   const isLive = match.status === "live" || match.status === "halftime";
   const isVolleyball = sport.slug === "volleyball";
+  const isBasketball = sport.slug === "basketball";
   const isBasketballTiedAtEnd =
     sport.slug === "basketball" &&
     match.status === "halftime" &&
-    match.current_period >= sport.periods.count &&
+    (match.current_period ?? 0) >= sportPeriodsCount &&
     match.home_score === match.away_score;
 
-  // Load existing events
   useEffect(() => {
     supabase
       .from("match_events")
@@ -50,9 +64,8 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
       .eq("match_id", match.id)
       .order("created_at", { ascending: false })
       .then(({ data }) => setEvents((data ?? []) as MatchEvent[]));
-  }, [match.id]);
+  }, [match.id, supabase]);
 
-  // Realtime: listen for match score updates and new events
   useEffect(() => {
     const channel = supabase
       .channel(`scorer-${match.id}`)
@@ -62,7 +75,6 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
       .on("postgres_changes", {
         event: "INSERT", schema: "public", table: "match_events", filter: `match_id=eq.${match.id}`,
       }, async (payload) => {
-        // Fetch with joins
         const { data } = await supabase
           .from("match_events")
           .select("*, player:players!match_events_player_id_fkey(*), team:teams(*)")
@@ -78,9 +90,29 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [match.id]);
+  }, [match.id, supabase]);
 
-  // ── Game state transitions ──────────────────────────────────────
+  const getPeriodStartEventType = useCallback(() => {
+    if (sport.slug === "basketball") return "quarter_start";
+    if (sport.slug === "volleyball") return "set_start";
+    return "half_start";
+  }, [sport.slug]);
+
+  const getPeriodEndEventType = useCallback(() => {
+    if (sport.slug === "basketball") return "quarter_end";
+    if (sport.slug === "volleyball") return "set_end";
+    return "half_end";
+  }, [sport.slug]);
+
+  async function logSystemEvent(eventType: string) {
+    await supabase.from("match_events").insert({
+      match_id: match.id,
+      event_type: eventType,
+      team_id: match.home_team_id,
+      period: match.current_period || 1,
+    });
+  }
+
   async function startMatch() {
     setSaving(true);
     await supabase.from("matches").update({
@@ -93,8 +125,22 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
     setSaving(false);
   }
 
+  // Safely compute modern period data structures
+  const periodScores =
+    (sport.slug === "basketball" || sport.slug === "volleyball") && events.length > 0
+      ? computePeriodScores({
+          events,
+          scoringRules: sportScoringRules,
+          homeTeamId: match.home_team_id,
+          awayTeamId: match.away_team_id,
+          periodCount: sportPeriodsCount,
+          sportSlug: sport.slug,
+        })
+      : [];
+
+  const currentPeriodScore = periodScores.find((p) => p.period === match.current_period);
+
   async function endPeriod() {
-    // ── Volleyball: sets won tracked by app, not DB trigger ──────
     if (isVolleyball) {
       const setHome = currentPeriodScore?.home ?? 0;
       const setAway = currentPeriodScore?.away ?? 0;
@@ -104,10 +150,10 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
       const prevAwaySets = (match.away_sets ?? []) as number[];
       const newHomeSets = [...prevHomeSets, setHome];
       const newAwaySets = [...prevAwaySets, setAway];
-      const newHomeSetsWon = match.home_score + (homeWon ? 1 : 0);
-      const newAwaySetsWon = match.away_score + (awayWon ? 1 : 0);
+      const newHomeSetsWon = (match.home_score ?? 0) + (homeWon ? 1 : 0);
+      const newAwaySetsWon = (match.away_score ?? 0) + (awayWon ? 1 : 0);
       const matchOver =
-        newHomeSetsWon >= 3 || newAwaySetsWon >= 3 || match.current_period >= sport.periods.count;
+        newHomeSetsWon >= 3 || newAwaySetsWon >= 3 || (match.current_period ?? 0) >= sportPeriodsCount;
 
       if (matchOver) {
         const winner = newHomeSetsWon >= newAwaySetsWon ? match.home_team?.name : match.away_team?.name;
@@ -142,9 +188,8 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
       return;
     }
 
-    // ── Football & Basketball ────────────────────────────────────
     const isTied = match.home_score === match.away_score;
-    const isLastScheduledPeriod = match.current_period >= sport.periods.count;
+    const isLastScheduledPeriod = (match.current_period ?? 0) >= sportPeriodsCount;
     const canEndMatch =
       isLastScheduledPeriod &&
       (sport.slug === "football" || (sport.slug === "basketball" && !isTied));
@@ -171,41 +216,23 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
     setSaving(false);
   }
 
-
   async function startNextPeriod() {
     setSaving(true);
     await supabase.from("matches").update({
       status: "live",
-      current_period: match.current_period + 1,
+      current_period: (match.current_period ?? 1) + 1,
       clock_running: true,
     }).eq("id", match.id);
     await logSystemEvent(getPeriodStartEventType());
     setSaving(false);
   }
 
-  function getPeriodStartEventType() {
-    if (sport.slug === "basketball") return "quarter_start";
-    if (sport.slug === "volleyball") return "set_start";
-    return "half_start";
-  }
-
-  function getPeriodEndEventType() {
-    if (sport.slug === "basketball") return "quarter_end";
-    if (sport.slug === "volleyball") return "set_end";
-    return "half_end";
-  }
-
-  async function logSystemEvent(eventType: string) {
-    await supabase.from("match_events").insert({
-      match_id: match.id,
-      event_type: eventType,
-      team_id: match.home_team_id,
-      period: match.current_period || 1,
-    });
-  }
-
-  // ── Event logging ───────────────────────────────────────────────
   function handleEventButton(eventType: EventTypeConfig, teamId: string, side: "home" | "away") {
+    if (isBasketball && (eventType.type === "2_pointer" || eventType.type === "3_pointer" || eventType.type === "free_throw")) {
+      setBasketballIntent({ eventType, teamId, side });
+      return;
+    }
+
     if (eventType.requires_player) {
       setPending({ eventType, teamId, side });
     } else {
@@ -213,9 +240,33 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
     }
   }
 
+  function handleBasketballOutcome(made: boolean) {
+    if (!basketballIntent) return;
+    
+    const configuredType = { ...basketballIntent.eventType };
+    if (!made) {
+      configuredType.type = `missed_${configuredType.type}`;
+      configuredType.label = `Missed ${configuredType.label}`;
+      configuredType.affects_score = false; 
+    }
+
+    if (configuredType.requires_player) {
+      setPending({ 
+        eventType: configuredType, 
+        teamId: basketballIntent.teamId, 
+        side: basketballIntent.side,
+        isMissed: !made
+      });
+    } else {
+      logEvent(configuredType, basketballIntent.teamId, null);
+    }
+    setBasketballIntent(null);
+  }
+
   async function logEvent(eventType: EventTypeConfig, teamId: string, player: Player | null) {
     setSaving(true);
     setPending(null);
+    
     await supabase.from("match_events").insert({
       match_id: match.id,
       event_type: eventType.type,
@@ -223,7 +274,9 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
       player_id: player?.id || null,
       period: match.current_period || 1,
       match_minute: minuteInput ? parseInt(minuteInput) : null,
+      details: eventType.type.startsWith("missed_") ? { missed: true } : null
     });
+    
     setMinuteInput("");
     setSaving(false);
   }
@@ -238,41 +291,27 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
   const periodLabel = useCallback(() => {
     if (sport.slug === "football") return match.current_period === 1 ? "1st Half" : "2nd Half";
     if (sport.slug === "basketball") {
-      if (match.current_period <= sport.periods.count) return `Q${match.current_period}`;
-      const ot = match.current_period - sport.periods.count;
+      if ((match.current_period ?? 1) <= sportPeriodsCount) return `Q${match.current_period}`;
+      const ot = (match.current_period ?? 1) - sportPeriodsCount;
       return ot === 1 ? "OT" : `OT${ot}`;
     }
     return `Set ${match.current_period}`;
-  }, [sport.slug, sport.periods.count, match.current_period]);
+  }, [sport.slug, sportPeriodsCount, match.current_period]);
 
   const nextPeriodLabel = (() => {
-    const next = match.current_period + 1;
+    const next = (match.current_period ?? 1) + 1;
     if (sport.slug === "basketball") {
-      if (next <= sport.periods.count) return `Q${next}`;
-      const ot = next - sport.periods.count;
+      if (next <= sportPeriodsCount) return `Q${next}`;
+      const ot = next - sportPeriodsCount;
       return ot === 1 ? "OT" : `OT${ot}`;
     }
     if (sport.slug === "volleyball") return `Set ${next}`;
     return "2nd Half";
   })();
 
-  const periodScores =
-    (sport.slug === "basketball" || sport.slug === "volleyball") && events.length > 0
-      ? computePeriodScores({
-          events,
-          scoringRules: sport.scoring_rules,
-          homeTeamId: match.home_team_id,
-          awayTeamId: match.away_team_id,
-          periodCount: sport.periods.count,
-          sportSlug: sport.slug,
-        })
-      : [];
-
-  const currentPeriodScore = periodScores.find((p) => p.period === match.current_period);
-
-  const scoreEventTypes = sport.event_types.filter((e) => e.affects_score);
+  const scoreEventTypes = sportEventTypes.filter((e) => e.affects_score);
   const systemEventTypes = ["half_start","half_end","match_end","quarter_start","quarter_end","set_start","set_end"];
-  const otherEventTypes = sport.event_types.filter((e) => !e.affects_score && !systemEventTypes.includes(e.type));
+  const otherEventTypes = sportEventTypes.filter((e) => !e.affects_score && !systemEventTypes.includes(e.type) && !e.type.startsWith("missed_"));
 
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col">
@@ -301,7 +340,6 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
             {isVolleyball && (
               <div className="text-xs text-gray-500 text-center uppercase tracking-wider">Sets</div>
             )}
-            {/* Volleyball: live set score */}
             {isVolleyball && match.status === "live" && currentPeriodScore && (
               <div className="text-xs text-gray-400 text-center mt-0.5">
                 Set {match.current_period}:{" "}
@@ -317,7 +355,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
                   LIVE · {periodLabel()}
                 </span>
               )}
-              {match.status === "halftime" && <span className="text-yellow-400 font-bold">{sport.periods.name.toUpperCase()} BREAK</span>}
+              {match.status === "halftime" && <span className="text-yellow-400 font-bold">{sportPeriodsName.toUpperCase()} BREAK</span>}
               {match.status === "scheduled" && <span className="text-gray-400">NOT STARTED</span>}
             </div>
           </div>
@@ -350,7 +388,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
               {(() => {
                 const isEndMatch =
                   !isVolleyball &&
-                  match.current_period >= sport.periods.count &&
+                  (match.current_period ?? 0) >= sportPeriodsCount &&
                   !(sport.slug === "basketball" && match.home_score === match.away_score);
                 return (
                   <button onClick={endPeriod} disabled={saving} className="inline-flex items-center gap-2 bg-amber-600 hover:bg-amber-500 text-white font-bold px-4 py-2.5 rounded-xl disabled:opacity-50 text-sm">
@@ -398,8 +436,37 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
             </div>
           )}
 
+          {/* Basketball Stage-2 Action Resolution Drawer Overlay */}
+          {basketballIntent && (
+            <div className="bg-gray-800 border-2 border-red-500/50 rounded-2xl p-4 text-center animate-in fade-in zoom-in-95 duration-150">
+              <p className="text-sm text-gray-300 font-semibold uppercase tracking-wider mb-3">
+                Resolve Shot: {basketballIntent.eventType.label} ({basketballIntent.side === "home" ? match.home_team?.short_name : match.away_team?.short_name})
+              </p>
+              <div className="grid grid-cols-2 gap-4">
+                <button
+                  onClick={() => handleBasketballOutcome(true)}
+                  className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded-xl inline-flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"
+                >
+                  <Check className="h-5 w-5" /> MADE
+                </button>
+                <button
+                  onClick={() => handleBasketballOutcome(false)}
+                  className="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-xl inline-flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"
+                >
+                  <X className="h-5 w-5" /> MISSED
+                </button>
+              </div>
+              <button 
+                onClick={() => setBasketballIntent(null)}
+                className="text-xs text-gray-500 hover:text-gray-300 underline mt-3 block mx-auto"
+              >
+                Cancel Action
+              </button>
+            </div>
+          )}
+
           {/* Scoring events */}
-          {scoreEventTypes.length > 0 && (
+          {scoreEventTypes.length > 0 && !basketballIntent && (
             <Section label="Scoring">
               <TeamButtons
                 eventTypes={scoreEventTypes}
@@ -412,7 +479,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
           )}
 
           {/* Other events */}
-          {otherEventTypes.length > 0 && (
+          {otherEventTypes.length > 0 && !basketballIntent && (
             <Section label="Events">
               <TeamButtons
                 eventTypes={otherEventTypes}
@@ -440,7 +507,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
                 <Zap className="h-5 w-5" /> OVERTIME REQUIRED <Zap className="h-5 w-5" />
               </div>
               <p className="text-gray-300 text-sm mb-4 font-medium">
-                {match.current_period === 4 ? "Regulation" : `OT${match.current_period - 4}`} ended in a tie ({match.home_score} – {match.away_score}).
+                {match.current_period === 4 ? "Regulation" : `OT${(match.current_period ?? 4) - 4}`} ended in a tie ({match.home_score} – {match.away_score}).
                 Start the next overtime period to determine a winner!
               </p>
               <button
