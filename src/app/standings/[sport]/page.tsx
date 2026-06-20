@@ -5,6 +5,7 @@ import { computeStandings } from "@/lib/utils/standings";
 import { SportIcon } from "@/components/ui/SportIcon";
 import { Sparkles, Trophy, Swords } from "lucide-react";
 import type { Match, Season, Sport, Team } from "@/lib/supabase/types";
+import TeamForm from "@/components/matches/TeamForm";
 
 const MATCH_SELECT = `
   *,

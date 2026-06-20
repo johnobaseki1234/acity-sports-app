@@ -1,6 +1,7 @@
 import { createClient } from "../../../lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import { ArrowLeft, Trophy, Award, Activity } from "lucide-react";
 import { PlayerStatsTabs, type SportStatBlock } from "./PlayerStatsTabs";
 
 interface PlayerPageProps {
@@ -19,7 +20,6 @@ type RawEvent = {
   } | null;
 };
 
-// Supabase widens to-one relations to arrays in its generated types — normalize.
 function one<T>(value: T | T[] | null | undefined): T | undefined {
   return Array.isArray(value) ? value[0] : value ?? undefined;
 }
@@ -70,7 +70,7 @@ function aggregate(sportSlug: string, events: RawEvent[]): { label: string; valu
       switch (e.event_type) {
         case "kill": kills++; points++; break;
         case "ace": aces++; points++; break;
-        case "block": blocks++; points++; break;
+        case "block": blocks++; block_point: points++; break; // combined tally
         case "point": points++; break;
       }
     }
@@ -124,8 +124,6 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
     notFound();
   }
 
-  // Gather the set of player records that belong to this student. If an
-  // athlete_key is set, all records sharing it are the same person.
   let records = [player];
   if (player.athlete_key) {
     const { data: linked } = await supabase
@@ -135,7 +133,6 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
     if (linked && linked.length > 0) records = linked;
   }
 
-  // Build one stat block per record's sport.
   const blocks: SportStatBlock[] = [];
   for (const rec of records) {
     const sport = await getTeamSport(supabase, rec.team_id);
@@ -164,44 +161,76 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      {player.team && (
-        <Link
-          href={`/team/${player.team.slug}`}
-          className="text-sm text-red-600 dark:text-red-400 hover:underline inline-flex items-center mb-6 font-medium"
-        >
-          ← Back to {player.team.name}
-        </Link>
-      )}
-
-      <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl p-6 shadow-sm flex flex-col sm:flex-row items-center gap-6 mb-8">
-        {player.photo_url ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={player.photo_url}
-            alt={player.name}
-            className="w-28 h-28 object-cover rounded-full border-2 border-gray-100 dark:border-zinc-800 bg-gray-50"
-          />
-        ) : (
-          <div className="w-28 h-28 bg-gradient-to-tr from-gray-100 to-gray-200 dark:from-zinc-800 dark:to-zinc-700 rounded-full flex items-center justify-center text-gray-400 text-4xl font-bold">
-            #{player.jersey_number}
-          </div>
+    <div className="min-h-screen bg-zinc-50 dark:bg-[#0B0F19] text-zinc-900 dark:text-zinc-100 py-10 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto space-y-6">
+        
+        {/* Navigation Link Wire */}
+        {player.team && (
+          <Link
+            href={`/team/${player.team.slug}`}
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-red-600 dark:hover:text-white transition-colors"
+          >
+            <ArrowLeft className="h-4 w-4 stroke-[2.5]" /> Back to {player.team.name}
+          </Link>
         )}
-        <div className="text-center sm:text-left">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-zinc-50">{player.name}</h1>
-          <p className="text-gray-500 dark:text-zinc-400 font-medium mt-1">
-            {player.position || "Player"}
-            {player.secondary_position ? ` / ${player.secondary_position}` : ""}
-          </p>
-          {blocks.length > 1 && (
-            <span className="inline-block mt-3 px-3 py-1 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-semibold rounded-full">
-              Multi-sport athlete · {blocks.length} sports
-            </span>
-          )}
-        </div>
-      </div>
 
-      <PlayerStatsTabs blocks={blocks} />
+        {/* Premium Profile Info Header Panel */}
+        <div className="bg-white dark:bg-[#111827] border border-zinc-200/80 dark:border-gray-800 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden shadow-sm dark:shadow-2xl">
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-red-600 to-red-800" />
+
+          <div className="flex items-center gap-5">
+            {player.photo_url ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={player.photo_url}
+                alt={player.name}
+                className="w-20 h-20 sm:w-24 sm:h-24 object-cover rounded-2xl border-2 border-zinc-200 dark:border-gray-700 bg-zinc-100 dark:bg-gray-800"
+              />
+            ) : (
+              <div className="h-20 w-20 sm:h-24 sm:w-24 rounded-2xl bg-gradient-to-br from-zinc-100 to-zinc-200 dark:from-zinc-800 dark:to-zinc-900 border border-zinc-200 dark:border-gray-700 flex items-center justify-center font-black text-2xl text-zinc-700 dark:text-white tracking-tighter">
+                #{player.jersey_number ?? "00"}
+              </div>
+            )}
+            
+            <div>
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-2xl font-black tracking-tight text-zinc-900 dark:text-white uppercase">
+                  {player.name}
+                </h1>
+                {blocks.length > 1 && (
+                  <span className="text-[9px] font-black uppercase tracking-wider bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    <Trophy className="h-2.5 w-2.5" /> Multi-Sport
+                  </span>
+                )}
+              </div>
+              <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
+                {player.team?.name || "Independent"} · <span className="text-red-600 dark:text-red-500 font-semibold">{player.position || "Athlete"}</span>
+                {player.secondary_position ? ` / ${player.secondary_position}` : ""}
+              </p>
+            </div>
+          </div>
+
+          <div className="shrink-0 flex items-center gap-3 bg-zinc-50 dark:bg-[#0B0F19] border border-zinc-200 dark:border-gray-800/80 px-4 py-3 rounded-xl">
+            <Award className="h-5 w-5 text-amber-500" />
+            <div>
+              <span className="block text-[9px] font-black text-zinc-400 dark:text-gray-500 uppercase tracking-wider">Status Standing</span>
+              <span className="text-xs font-bold text-zinc-700 dark:text-gray-200">Active Roster Engine</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Dynamic Presentation Component Tabs Area */}
+        <div className="bg-white dark:bg-[#111827] border border-zinc-200/80 dark:border-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm">
+          <div className="flex items-center gap-2 mb-4 border-b border-zinc-100 dark:border-gray-800 pb-3">
+            <Activity className="h-4 w-4 text-red-500" />
+            <h3 className="text-xs font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
+              Aggregated Metrics & Historical Events Log
+            </h3>
+          </div>
+          <PlayerStatsTabs blocks={blocks} />
+        </div>
+
+      </div>
     </div>
   );
 }

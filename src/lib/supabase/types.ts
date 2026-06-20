@@ -223,3 +223,59 @@ export type PlayerMatchStats = {
 
   player?: Player;
 };
+export type MatchLineup = {
+  id: string;
+  match_id: string;
+  team_id: string;
+  player_id: string;
+  role: string;
+  x: number;
+  y: number;
+  is_starter: boolean;
+  created_at: string;
+
+  player?: Player;
+};
+
+export type Substitution = {
+  id: string;
+  match_id: string;
+  team_id: string;
+  player_out_id: string;
+  player_in_id: string;
+  minute: number | null;
+  created_at: string;
+
+  player_out?: Player;
+  player_in?: Player;
+};
+
+export type PlayerStats = {
+  player_id: string;
+
+  // Football Performance Fields
+  goals: number;
+  assists: number;
+  yellow_cards: number;
+  red_cards: number;
+  saves: number;
+  minutes_played: number;
+
+  // Basketball Performance Fields
+  two_pointers_made: number;
+  two_pointers_attempted: number;
+  three_pointers_made: number;
+  three_pointers_attempted: number;
+  free_throws_made: number;
+  free_throws_attempted: number;
+  rebounds: number;
+  offensive_rebounds: number;
+  defensive_rebounds: number;
+  steals: number;
+  blocks: number;
+
+  // Derived Performance Metrics
+  field_goal_percentage: number;
+  three_point_percentage: number;
+  free_throw_percentage: number;
+};

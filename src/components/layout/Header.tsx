@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, Search, Bell } from "lucide-react";
+import { Trophy, Bell } from "lucide-react";
 import ThemeToggle from "../ui/ThemeToggle";
+import { HeaderSearch } from "@/components/ui/HeaderSearch";
 
 const NAV = [
   { label: "Home", href: "/", match: (p: string) => p === "/" },
   { label: "Fixtures", href: "/fixtures/basketball", match: (p: string) => p.startsWith("/fixtures") },
-  { label: "Search", href: "/search", match: (p: string) => p.startsWith("/search") },
+  { label: "Leaders", href: "/leaders", match: (p: string) => p.startsWith("/leaders") },
   { label: "Standings", href: "/standings/basketball", match: (p: string) => p.startsWith("/standings") },
   { label: "Following", href: "/following", match: (p: string) => p.startsWith("/following") },
 ];
@@ -59,14 +60,11 @@ export default function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <Link
-              href="/search"
-              aria-label="Search"
-              className="md:hidden grid place-items-center h-10 w-10 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5 transition active:scale-95"
-            >
-              <Search className="h-5 w-5" />
-            </Link>
+            {/* Embedded Live Multi-Sport Stats Search Trigger Component */}
+            <HeaderSearch />
+            
             <ThemeToggle />
+            
             <button
               aria-label="Notifications"
               className="relative grid place-items-center h-10 w-10 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5 transition active:scale-95"
@@ -74,6 +72,7 @@ export default function Header() {
               <Bell className="h-5 w-5" />
               <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-900" />
             </button>
+            
             <button
               aria-label="Account"
               className="grid place-items-center h-10 w-10 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 text-xs font-bold text-zinc-600 dark:text-zinc-200 transition active:scale-95"
