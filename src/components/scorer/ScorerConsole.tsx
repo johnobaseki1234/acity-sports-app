@@ -2,12 +2,8 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-
-// Core UI Components (These are the ones that were missing!)
 import { AssistPicker } from "./AssistPicker";
-// NOTE: We do NOT import EventLog here because it is a separate timeline component!
 
-// 1. TypeScript Types
 type Player = {
   id: string;
   name: string;
@@ -32,7 +28,6 @@ type Props = {
   awayPlayers: Player[];
 };
 
-// 2. Sub-Components (PlayerPicker Modal Layout)
 type PlayerPickerProps = {
   players: Player[];
   title: string;
@@ -64,9 +59,7 @@ function PlayerPicker({ players, title, onSelect, onCancel }: PlayerPickerProps)
   );
 }
 
-// 3. Main Export Component Begins Here
-export default function ScorerConsole({ match, homePlayers, awayPlayers }: Props) {
-  // Your console logic, state variables, and layout continue below...
+export function ScorerConsole({ match, homePlayers, awayPlayers }: Props) {
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
   const [minuteInput, setMinuteInput] = useState("");
@@ -126,22 +119,21 @@ export default function ScorerConsole({ match, homePlayers, awayPlayers }: Props
             value={minuteInput}
             onChange={(e) => setMinuteInput(e.target.value)}
             placeholder="e.g., 72"
-            className="w-20 bg-gray-800 border border-gray-700 rounded-xl px-2.5 py-1 text-white text-center font-bold focus:outline-none focus:border-blue-500"
+            className="w-20 bg-gray-800 border border-gray-700 rounded-xl px-2.5 py-1 text-white text-center font-bold focus:outline-none"
           />
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-6">
-        {/* Home Team Control Panel */}
         <div className="bg-gray-800/40 border border-gray-800/80 p-4 rounded-2xl space-y-3">
-          <h3 className="text-sm font-bold text-blue-400 tracking-wide uppercase">Home Team Actions</h3>
+          <h3 className="text-sm font-bold text-blue-400 uppercase">Home Actions</h3>
           <div className="flex flex-col space-y-2">
             {actionButtons.map((btn) => (
               <button
                 key={btn.type}
                 disabled={saving}
                 onClick={() => setPending({ eventType: btn, teamId: match.home_team_id, side: "home" })}
-                className="w-full bg-blue-600/10 hover:bg-blue-600 text-blue-400 font-semibold py-3 px-4 rounded-xl text-left border border-blue-500/20 transition-all active:scale-[0.99]"
+                className="w-full bg-blue-600/10 hover:bg-blue-600 text-blue-400 font-semibold py-3 px-4 rounded-xl text-left border border-blue-500/20"
               >
                 {btn.label}
               </button>
@@ -149,16 +141,15 @@ export default function ScorerConsole({ match, homePlayers, awayPlayers }: Props
           </div>
         </div>
 
-        {/* Away Team Control Panel */}
         <div className="bg-gray-800/40 border border-gray-800/80 p-4 rounded-2xl space-y-3">
-          <h3 className="text-sm font-bold text-orange-400 tracking-wide uppercase">Away Team Actions</h3>
+          <h3 className="text-sm font-bold text-orange-400 uppercase">Away Actions</h3>
           <div className="flex flex-col space-y-2">
             {actionButtons.map((btn) => (
               <button
                 key={btn.type}
                 disabled={saving}
                 onClick={() => setPending({ eventType: btn, teamId: match.away_team_id, side: "away" })}
-                className="w-full bg-orange-600/10 hover:bg-orange-600 text-orange-400 font-semibold py-3 px-4 rounded-xl text-left border border-orange-500/20 transition-all active:scale-[0.99]"
+                className="w-full bg-orange-600/10 hover:bg-orange-600 text-orange-400 font-semibold py-3 px-4 rounded-xl text-left border border-orange-500/20"
               >
                 {btn.label}
               </button>
@@ -167,14 +158,12 @@ export default function ScorerConsole({ match, homePlayers, awayPlayers }: Props
         </div>
       </div>
 
-      {/* STEP 1: Select Scorer Modal */}
       {pending && (
         <PlayerPicker
-          title={`Select Player for ${pending.eventType.label}`}
+          title={`Select Player`}
           players={pending.side === "home" ? homePlayers : awayPlayers}
           onSelect={(player) => {
             if (pending.eventType.type === "goal") {
-              // Store details for assist handling
               setPendingAssist({
                 scorer: player,
                 teamId: pending.teamId,
@@ -191,7 +180,6 @@ export default function ScorerConsole({ match, homePlayers, awayPlayers }: Props
         />
       )}
 
-      {/* STEP 2: Select Assister Modal */}
       {pendingAssist && (
         <AssistPicker
           players={pendingAssist.side === "home" ? homePlayers : awayPlayers}
