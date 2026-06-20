@@ -300,13 +300,13 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
 
   const nextPeriodLabel = (() => {
     const next = (match.current_period ?? 1) + 1;
+    if (sport.slug === "football") return next === 1 ? "1st Half" : "2nd Half";
     if (sport.slug === "basketball") {
       if (next <= sportPeriodsCount) return `Q${next}`;
       const ot = next - sportPeriodsCount;
       return ot === 1 ? "OT" : `OT${ot}`;
     }
-    if (sport.slug === "volleyball") return `Set ${next}`;
-    return "2nd Half";
+    return `Set ${next}`;
   })();
 
   const scoreEventTypes = sportEventTypes.filter((e) => e.affects_score);
