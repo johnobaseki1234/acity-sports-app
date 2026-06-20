@@ -2,8 +2,12 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { AssistPicker } from "./AssistPicker";
 
+// Core UI Components (These are the ones that were missing!)
+import { AssistPicker } from "./AssistPicker";
+// NOTE: We do NOT import EventLog here because it is a separate timeline component!
+
+// 1. TypeScript Types
 type Player = {
   id: string;
   name: string;
@@ -28,7 +32,7 @@ type Props = {
   awayPlayers: Player[];
 };
 
-// Simple picker component inline or imported
+// 2. Sub-Components (PlayerPicker Modal Layout)
 type PlayerPickerProps = {
   players: Player[];
   title: string;
@@ -60,7 +64,9 @@ function PlayerPicker({ players, title, onSelect, onCancel }: PlayerPickerProps)
   );
 }
 
+// 3. Main Export Component Begins Here
 export default function ScorerConsole({ match, homePlayers, awayPlayers }: Props) {
+  // Your console logic, state variables, and layout continue below...
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
   const [minuteInput, setMinuteInput] = useState("");
