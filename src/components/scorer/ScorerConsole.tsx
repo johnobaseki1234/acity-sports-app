@@ -24,6 +24,7 @@ type EventTypeConfig = {
 
 type Props = {
   match: Match;
+  sport: any; // <-- ADD THIS LINE RIGHT HERE
   homePlayers: Player[];
   awayPlayers: Player[];
 };
@@ -59,7 +60,7 @@ function PlayerPicker({ players, title, onSelect, onCancel }: PlayerPickerProps)
   );
 }
 
-export function ScorerConsole({ match, homePlayers, awayPlayers }: Props) {
+export function ScorerConsole({ match, sport, homePlayers, awayPlayers }: Props) {
   const supabase = createClient();
   const [saving, setSaving] = useState(false);
   const [minuteInput, setMinuteInput] = useState("");
