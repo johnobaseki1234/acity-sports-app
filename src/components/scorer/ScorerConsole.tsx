@@ -528,10 +528,10 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
       {/* Player picker modal */}
       {pending && (
         <PlayerPicker
-          players={pending.side === "home" ? homePlayers : awayPlayers}
-          teamName={pending.side === "home" ? (match.home_team?.name ?? "") : (match.away_team?.name ?? "")}
-          eventLabel={pending.eventType.label}
-          onSelect={(player) => logEvent(pending.eventType, pending.teamId, player)}
+          players={pending!.side === "home" ? homePlayers : awayPlayers}
+          teamName={pending!.side === "home" ? (match.home_team?.name ?? "") : (match.away_team?.name ?? "")}
+          eventLabel={pending!.eventType.label}
+          onSelect={(player) => logEvent(pending!.eventType, pending!.teamId, player)}
           onCancel={() => setPending(null)}
         />
       )}
