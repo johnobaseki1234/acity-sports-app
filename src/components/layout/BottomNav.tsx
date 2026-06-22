@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Search, Calendar, Trophy, User, type LucideIcon } from "lucide-react";
+import { Home, BarChart2, Calendar, Trophy, User, type LucideIcon } from "lucide-react";
 
 const ITEMS: { label: string; Icon: LucideIcon; href: string; match: (p: string) => boolean }[] = [
   { label: "Home", Icon: Home, href: "/", match: (p) => p === "/" },
-  { label: "Search", Icon: Search, href: "/search", match: (p) => p.startsWith("/search") },
+  { label: "Stats", Icon: BarChart2, href: "/leaders", match: (p) => p.startsWith("/leaders") },
   { label: "Fixtures", Icon: Calendar, href: "/fixtures/basketball", match: (p) => p.startsWith("/fixtures") },
   { label: "Standings", Icon: Trophy, href: "/standings/basketball", match: (p) => p.startsWith("/standings") },
   { label: "Profile", Icon: User, href: "/following", match: (p) => p.startsWith("/following") },
