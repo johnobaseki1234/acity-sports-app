@@ -2,21 +2,24 @@
 
 import { useEffect } from "react";
 
-// Registers the service worker on the client after load. Kept in its own
-// component so the root layout can stay a server component.
 export default function ServiceWorkerRegister() {
   useEffect(() => {
-    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
-    // Avoid noisy registration during local dev hot-reloads.
-    if (process.env.NODE_ENV !== "production") return;
+    // We cast window as 'any' so TypeScript stops shouting about workbox
+    const win = window as any;
 
-    const onLoad = () => {
-      navigator.serviceWorker.register("/sw.js").catch((err) => {
-        console.error("Service worker registration failed:", err);
+    if ("serviceWorker" in navigator && win.workbox !== undefined) {
+      const wb = win.workbox;
+
+      // This listener fires when a new update is found and waiting to install
+      wb.addEventListener("waiting", () => {
+        wb.addEventListener("controlling", () => {
+          window.location.reload();
+        });
+        wb.messageSkipWaiting();
       });
-    };
-    window.addEventListener("load", onLoad);
-    return () => window.removeEventListener("load", onLoad);
+
+      wb.register();
+    }
   }, []);
 
   return null;
