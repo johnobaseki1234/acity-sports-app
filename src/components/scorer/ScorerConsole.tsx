@@ -274,22 +274,38 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
   }
 
   async function logEvent(eventType: any, teamId: string, player: any, assistPlayer: any = null) {
-    setSaving(true);
-    
-    await supabase.from("match_events").insert({
-      match_id: match.id,
-      event_type: eventType.type,
-      team_id: teamId,
-      player_id: player?.id || null,
-      assist_player_id: assistPlayer?.id || null,
-      period: match.current_period || 1,
-      match_minute: minuteInput ? parseInt(minuteInput, 10) : null,
-      details: eventType.type.startsWith("missed_") ? { missed: true } : null
-    });
-    
-    setMinuteInput("");
-    setSaving(false);
+  setSaving(true);
+
+  await supabase.from("match_events").insert({
+    match_id: match.id,
+    event_type: eventType.type,
+    team_id: teamId,
+    player_id: player?.id || null,
+    assist_player_id: assistPlayer?.id || null,
+    period: match.current_period || 1,
+    match_minute: minuteInput ? parseInt(minuteInput, 10) : null,
+    details: eventType.type.startsWith("missed_") ? { missed: true } : null
+  });
+
+  // Update score if event affects it
+  if (eventType.affects_score && eventType.score_value) {
+    const isHome = teamId === match.home_team_id;
+    const newHomeScore = isHome
+      ? (match.home_score ?? 0) + eventType.score_value
+      : (match.home_score ?? 0);
+    const newAwayScore = !isHome
+      ? (match.away_score ?? 0) + eventType.score_value
+      : (match.away_score ?? 0);
+
+    await supabase.from("matches").update({
+      home_score: newHomeScore,
+      away_score: newAwayScore,
+    }).eq("id", match.id);
   }
+
+  setMinuteInput("");
+  setSaving(false);
+}
 
   async function undoLast() {
     const last = events[0];
