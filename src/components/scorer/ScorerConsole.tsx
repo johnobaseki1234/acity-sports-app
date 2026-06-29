@@ -49,7 +49,8 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
     side: "home" | "away";
   } | null>(null);
 
-  // Safe configurations with robust fallbacks to resolve any missing properties/types
+  // Safe configurations with robust fallbacks to resolve any 
+  // missing properties/types
   const sportPeriodsCount = (sport?.periods as any)?.count ?? 4;
   const sportPeriodsName = (sport?.periods as any)?.name ?? "period";
   const sportEventTypes = (sport?.event_types as EventTypeConfig[]) ?? [];
@@ -539,7 +540,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
           teamName={pending.side === "home" ? (match.home_team?.name ?? "") : (match.away_team?.name ?? "")}
           eventLabel={pending.eventType.label}
           onSelect={(player) => {
-            if (pending.eventType.type === "goal") {
+            if (pending.eventType.type === "goal" || pending.eventType.type === "points_2" || pending.eventType.type === "points_3") {
               setPendingAssist({
                 scorer: player,
                 teamId: pending.teamId,
