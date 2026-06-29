@@ -236,9 +236,9 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
   }
 
   function handleEventButton(eventType: EventTypeConfig, teamId: string, side: "home" | "away") {
-    if (isBasketball && (eventType.type === "2_pointer" || eventType.type === "3_pointer" || eventType.type === "free_throw")) {
-      setBasketballIntent({ eventType, teamId, side });
-      return;
+  if (isBasketball && (eventType.type === "points_2" || eventType.type === "points_3" || eventType.type === "free_throw_made")) {
+    setBasketballIntent({ eventType, teamId, side });
+    return;
     }
 
     if (eventType.requires_player) {
@@ -253,7 +253,9 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
     
     const configuredType = { ...basketballIntent.eventType };
     if (!made) {
-      configuredType.type = `missed_${configuredType.type}`;
+      if (configuredType.type === "points_2") configuredType.type = "missed_2pt";
+      else if (configuredType.type === "points_3") configuredType.type = "missed_3pt";
+      else if (configuredType.type === "free_throw_made") configuredType.type = "free_throw_missed";
       configuredType.label = `Missed ${configuredType.label}`;
       configuredType.affects_score = false; 
     }
