@@ -4,22 +4,51 @@ import { useEffect } from "react";
 
 export default function ServiceWorkerRegister() {
   useEffect(() => {
-    // We cast window as 'any' so TypeScript stops shouting about workbox
-    const win = window as any;
+    if (!("serviceWorker" in navigator)) return;
 
-    if ("serviceWorker" in navigator && win.workbox !== undefined) {
-      const wb = win.workbox;
-
-      // This listener fires when a new update is found and waiting to install
-      wb.addEventListener("waiting", () => {
-        wb.addEventListener("controlling", () => {
-          window.location.reload();
+    const registerSW = async () => {
+      try {
+        const registration = await navigator.serviceWorker.register("/sw.js", {
+          scope: "/",
         });
-        wb.messageSkipWaiting();
-      });
 
-      wb.register();
-    }
+        console.log("✅ Service Worker registered");
+
+        // Check immediately
+        registration.update();
+
+        // Check every minute
+        setInterval(() => {
+          registration.update();
+        }, 60000);
+
+        registration.addEventListener("updatefound", () => {
+          const worker = registration.installing;
+
+          if (!worker) return;
+
+          worker.addEventListener("statechange", () => {
+            if (
+              worker.state === "installed" &&
+              navigator.serviceWorker.controller
+            ) {
+              console.log("🚀 New version available");
+
+              window.location.reload();
+            }
+          });
+        });
+
+      } catch (err) {
+        console.error("SW Registration failed", err);
+      }
+    };
+
+    window.addEventListener("load", registerSW);
+
+    return () => {
+      window.removeEventListener("load", registerSW);
+    };
   }, []);
 
   return null;
