@@ -8,6 +8,7 @@ import { Trophy, Shield, Zap, Target, Star, SlidersHorizontal } from "lucide-rea
 export default function LeagueLeadersPage() {
   const supabase = createClient();
   const [statsData, setStatsData] = useState<any[]>([]);
+  const [teamSportMap, setTeamSportMap] = useState<Record<string, string>>({});
   const [activeTab, setActiveTab] = useState<"all" | "football" | "basketball">("all");
   const [loading, setLoading] = useState(true);
 
@@ -26,16 +27,24 @@ export default function LeagueLeadersPage() {
               id,
               name,
               short_name,
-              logo_url,
-              season_teams(
-                season:seasons(
-                  sport:sports(slug, name)
-                )
-              )
+              logo_url
             )
           )
         `);
       
+
+      const { data: seasonTeams } = await supabase
+        .from("season_teams")
+        .select("team_id, season:seasons(sport:sports(slug))");
+
+      const nextTeamSportMap: Record<string, string> = {};
+      (seasonTeams ?? []).forEach((st: any) => {
+        const slug = st.season?.sport?.slug;
+        if (slug) nextTeamSportMap[st.team_id] = slug;
+      });
+
+      setTeamSportMap(nextTeamSportMap);
+
       if (!error && data) {
         setStatsData(data);
       }
@@ -53,8 +62,8 @@ export default function LeagueLeadersPage() {
   }
 
   // Filter lists dynamically based on selected active category tag
-  const footballLeaders = statsData.filter((s: any) => s.player?.team?.season_teams?.[0]?.season?.sport?.slug === "football")
-  const basketballLeaders = statsData.filter((s: any) => s.player?.team?.season_teams?.[0]?.season?.sport?.slug === "basketball");
+  const footballLeaders = statsData.filter((s: any) => teamSportMap[s.player?.team?.id] === "football")
+  const basketballLeaders = statsData.filter((s: any) => teamSportMap[s.player?.team?.id] === "basketball");
 
   const getTopLeaders = (list: any[], key: string, limit = 5) => {
     return [...list]
