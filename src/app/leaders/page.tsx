@@ -22,8 +22,17 @@ export default function LeagueLeadersPage() {
             name,
             jersey_number,
             position,
-            sport:sports(slug, name),
-            team:teams(id, name, short_name, logo_url)
+            team:teams(
+              id,
+              name,
+              short_name,
+              logo_url,
+              season_teams(
+                season:seasons(
+                  sport:sports(slug, name)
+                )
+              )
+            )
           )
         `);
       
@@ -44,8 +53,8 @@ export default function LeagueLeadersPage() {
   }
 
   // Filter lists dynamically based on selected active category tag
-  const footballLeaders = statsData.filter((s: any) => s.player?.sport?.slug === "football");
-  const basketballLeaders = statsData.filter((s: any) => s.player?.sport?.slug === "basketball");
+  const footballLeaders = statsData.filter((s: any) => s.player?.team?.season_teams?.[0]?.season?.sport?.slug === "football")
+  const basketballLeaders = statsData.filter((s: any) => s.player?.team?.season_teams?.[0]?.season?.sport?.slug === "basketball");
 
   const getTopLeaders = (list: any[], key: string, limit = 5) => {
     return [...list]
