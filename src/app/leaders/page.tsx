@@ -15,20 +15,16 @@ export default function LeagueLeadersPage() {
   useEffect(() => {
     async function fetchStats() {
       const { data, error } = await supabase
-        .from("player_stats")
+        .from('player_stats')
         .select(`
           *,
-          player:players(
+          player:players!player_id (
             id,
             name,
             jersey_number,
             position,
-            team:teams(
-              id,
-              name,
-              short_name,
-              logo_url
-            )
+            sport:sports (slug, name),
+            team:teams (id, name, short_name, logo_url)
           )
         `);
       
