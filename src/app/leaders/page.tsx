@@ -57,6 +57,21 @@ export default function LeagueLeadersPage() {
       .sort((a, b) => b.total_points - a.total_points)
       .slice(0, limit);
 
+    const dummyLeaders = [
+  { 
+    player_name: "Alex Johnson", 
+    goals: 12, 
+    assists: 5, 
+    player: { name: "Alex Johnson", jersey_number: "10", position: "Forward", team: { name: "Varsity Lions", logo_url: "/lions.png" } } 
+  },
+  { 
+    player_name: "Marcus Green", 
+    goals: 9, 
+    assists: 8, 
+    player: { name: "Marcus Green", jersey_number: "23", position: "Midfielder", team: { name: "Varsity Lions", logo_url: "/lions.png" } } 
+  }
+];
+
   return (
     <div className="min-h-screen bg-[#0B0F19] text-gray-100 py-8 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-7xl mx-auto mb-8 border-b border-gray-800 pb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -169,7 +184,7 @@ function LeaderCard({ title, icon, items, renderStat, compact = false, footnote 
         {icon}
         <h3 className="font-bold text-xs tracking-wider uppercase text-gray-200">{title}</h3>
       </div> 
-      
+
       {items.length === 0 ? (
         <div className="flex-1 flex items-center justify-center py-6 text-xs text-gray-500 italic">No entries yet</div>
       ) : (
