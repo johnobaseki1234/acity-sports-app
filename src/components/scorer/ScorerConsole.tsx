@@ -12,6 +12,9 @@ import { EventLog } from "./EventLog";
 import { PlayerPicker } from "./PlayerPicker";
 import { AssistPicker } from "./AssistPicker";
 import { ChaosMonkey } from "./ChaosMonkey";
+import { ZonePicker } from "./ZonePicker";
+
+const FIELD_GOAL_TYPES = new Set(["points_2", "points_3", "missed_2pt", "missed_3pt"]);
 
 type Props = {
   match: Match;
@@ -25,6 +28,7 @@ type PendingEvent = {
   teamId: string;
   side: "home" | "away";
   isMissed?: boolean;
+  zone?: number;
 };
 
 export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPlayers }: Props) {
@@ -39,6 +43,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
     teamId: string;
     side: "home" | "away";
     eventType: EventTypeConfig;
+    zone?: number;
   } | null>(null);
   const [saving, setSaving] = useState(false);
   const [minuteInput, setMinuteInput] = useState("");
@@ -58,6 +63,14 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
     eventType: EventTypeConfig;
     teamId: string;
     side: "home" | "away";
+  } | null>(null);
+
+  // Shot-location capture — shown after Made/Missed for field-goal attempts only.
+  const [zoneAwaiting, setZoneAwaiting] = useState<{
+    eventType: EventTypeConfig;
+    teamId: string;
+    side: "home" | "away";
+    isMissed: boolean;
   } | null>(null);
 
   // Safe configurations with robust fallbacks to resolve any 
@@ -274,12 +287,23 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
       configuredType.affects_score = false; 
     }
 
-    if (configuredType.requires_player) {
-      setPending({ 
-        eventType: configuredType, 
-        teamId: basketballIntent.teamId, 
+    if (FIELD_GOAL_TYPES.has(configuredType.type)) {
+      setZoneAwaiting({
+        eventType: configuredType,
+        teamId: basketballIntent.teamId,
         side: basketballIntent.side,
-        isMissed: !made
+        isMissed: !made,
+      });
+      setBasketballIntent(null);
+      return;
+    }
+
+    if (configuredType.requires_player) {
+      setPending({
+        eventType: configuredType,
+        teamId: basketballIntent.teamId,
+        side: basketballIntent.side,
+        isMissed: !made,
       });
     } else {
       logEvent(configuredType, basketballIntent.teamId, null);
@@ -287,15 +311,32 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
     setBasketballIntent(null);
   }
 
+  function resolveZone(zone?: number) {
+    if (!zoneAwaiting) return;
+    setPending({
+      eventType: zoneAwaiting.eventType,
+      teamId: zoneAwaiting.teamId,
+      side: zoneAwaiting.side,
+      isMissed: zoneAwaiting.isMissed,
+      zone,
+    });
+    setZoneAwaiting(null);
+  }
+
   /** Period-close tokens that invalidate late-arriving score packets. */
   const PERIOD_CLOSE_TYPES = ["quarter_end", "set_end", "half_end", "match_end"];
 
-  async function logEvent(eventType: any, teamId: string, player: any, assistPlayer: any = null) {
+  async function logEvent(eventType: any, teamId: string, player: any, assistPlayer: any = null, zone?: number) {
     setSaving(true);
 
     const period = match.current_period || 1;
     const affectsScore = Boolean(eventType.affects_score && eventType.score_value);
     const isHome = teamId === match.home_team_id;
+
+    const details: Record<string, unknown> | null =
+      eventType.type.startsWith("missed_") || zone !== undefined
+        ? { ...(eventType.type.startsWith("missed_") ? { missed: true } : {}), ...(zone !== undefined ? { zone } : {}) }
+        : null;
 
     // ── Optimistic apply ────────────────────────────────────────────────
     const tempId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -308,7 +349,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
       assist_player_id: assistPlayer?.id ?? null,
       period,
       match_minute: minuteInput ? parseInt(minuteInput, 10) : null,
-      details: eventType.type.startsWith("missed_") ? { missed: true } : null,
+      details,
       created_at: new Date().toISOString(),
       created_by: "",
       player: player ?? undefined,
@@ -367,7 +408,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
         assist_player_id: assistPlayer?.id || null,
         period,
         match_minute: minuteInput ? parseInt(minuteInput, 10) : null,
-        details: eventType.type.startsWith("missed_") ? { missed: true } : null,
+        details,
       })
       .select("*, player:players!match_events_player_id_fkey(*), team:teams(*)")
       .single();
@@ -609,8 +650,13 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
             </div>
           )}
 
+          {/* Shot-location capture — real telemetry for the 14-Zone Shot Map */}
+          {zoneAwaiting && (
+            <ZonePicker onSelect={resolveZone} onSkip={() => resolveZone(undefined)} />
+          )}
+
           {/* Scoring events */}
-          {scoreEventTypes.length > 0 && !basketballIntent && (
+          {scoreEventTypes.length > 0 && !basketballIntent && !zoneAwaiting && (
             <Section label="Scoring">
               <TeamButtons
                 eventTypes={scoreEventTypes}
@@ -623,7 +669,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
           )}
 
           {/* Other events */}
-          {otherEventTypes.length > 0 && !basketballIntent && (
+          {otherEventTypes.length > 0 && !basketballIntent && !zoneAwaiting && (
             <Section label="Events">
               <TeamButtons
                 eventTypes={otherEventTypes}
@@ -685,12 +731,13 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
                 teamId: pending.teamId,
                 side: pending.side,
                 eventType: pending.eventType,
+                zone: pending.zone,
               });
               setPending(null);
               return;
             }
 
-            logEvent(pending.eventType, pending.teamId, player);
+            logEvent(pending.eventType, pending.teamId, player, null, pending.zone);
             setPending(null);
           }}
           onCancel={() => setPending(null)}
@@ -707,7 +754,8 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
               pendingAssist.eventType,
               pendingAssist.teamId,
               pendingAssist.scorer,
-              assistPlayer
+              assistPlayer,
+              pendingAssist.zone
             );
             setPendingAssist(null);
           }}

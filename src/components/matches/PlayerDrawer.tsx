@@ -1,11 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { X, Target } from "lucide-react";
 import type { MatchEvent, Player, Sport, Team } from "@/lib/supabase/types";
-import { computeSingleGameStats } from "@/lib/utils/singleGameStats";
+import { computeSingleGameStats, EMPTY_GAME_STATS } from "@/lib/utils/singleGameStats";
 import { ShotDistribution } from "@/components/matches/ShotDistribution";
+import { fetchCareerAverages, type CareerAverages } from "@/lib/stats/careerAverages";
 
 type Props = {
   player: Player | null;
@@ -20,13 +21,28 @@ export function PlayerDrawer({ player, team, events, sport, onClose }: Props) {
     () =>
       player
         ? computeSingleGameStats(player.id, events, sport)
-        : { score: 0, assists: 0, blocks: 0, saves: 0, fouls: 0 },
+        : EMPTY_GAME_STATS,
     [player, events, sport]
   );
 
   const scoreLabel = sport.slug === "football" ? "Goals" : "Points";
   const defenseLabel = sport.slug === "football" ? "Saves" : "Blocks";
   const defenseValue = sport.slug === "football" ? stats.saves : stats.blocks;
+
+  const [career, setCareer] = useState<CareerAverages | null>(null);
+  useEffect(() => {
+    if (!player) {
+      setCareer(null);
+      return;
+    }
+    let cancelled = false;
+    fetchCareerAverages(player.id, sport.slug).then((result) => {
+      if (!cancelled) setCareer(result);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [player, sport.slug]);
 
   return (
     <AnimatePresence>
@@ -91,16 +107,35 @@ export function PlayerDrawer({ player, team, events, sport, onClose }: Props) {
               </div>
 
               {/* Single-game telemetry */}
-              <div className="grid grid-cols-4 gap-2 mb-4">
+              <div className="grid grid-cols-4 gap-2 mb-3">
                 <StatTile label={scoreLabel} value={stats.score} accent="volt" />
                 <StatTile label="Assists" value={stats.assists} accent="volt" />
                 <StatTile label={defenseLabel} value={defenseValue} accent="volt" />
                 <StatTile label="Fouls" value={stats.fouls} accent="crimson" />
               </div>
 
+              {/* Season per-game averages */}
+              {career && (
+                <div className="rounded-2xl bg-white/[0.03] border border-white/10 px-3 py-2.5 mb-4">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mb-1.5">
+                    Season Averages · {career.gamesPlayed} GP
+                  </p>
+                  <div className="flex items-center justify-between">
+                    {career.lines.map((l) => (
+                      <div key={l.label} className="text-center">
+                        <div className="text-sm font-black tabular-nums text-white">{l.value}</div>
+                        <div className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">
+                          {l.label}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* 14-Zone Shot Distribution */}
               {sport.slug === "basketball" ? (
-                <ShotDistribution playerId={player.id} gameScore={stats.score} />
+                <ShotDistribution playerId={player.id} events={events} />
               ) : (
                 <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-5 text-center">
                   <Target className="h-6 w-6 mx-auto mb-2 text-vanguard-volt" />
