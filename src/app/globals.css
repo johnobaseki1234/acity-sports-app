@@ -70,12 +70,12 @@
     display: none;
   }
 
-  /* Glassmorphism surface */
+  /* Premium charcoal surfaces (Midnight Vanguard) */
   .glass {
-    @apply bg-white/70 dark:bg-zinc-900/60 backdrop-blur-xl border border-white/60 dark:border-zinc-800/80;
+    @apply bg-zinc-900/60 backdrop-blur-xl border border-white/10;
   }
   .glass-strong {
-    @apply bg-white/80 dark:bg-zinc-900/75 backdrop-blur-2xl border border-white/70 dark:border-zinc-800;
+    @apply bg-vanguard-charcoal/85 backdrop-blur-2xl border border-white/10;
   }
 
   /* Subtle grid background */

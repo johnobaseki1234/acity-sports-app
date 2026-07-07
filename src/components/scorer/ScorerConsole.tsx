@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, Play, Pause, Square, Undo2, Zap, Check, X } from "lucide-react";
+import { ChevronLeft, Play, Pause, Square, Undo2, Zap, Check, X, AlertTriangle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Match, Player, Sport, EventTypeConfig, MatchEvent } from "@/lib/supabase/types";
 import { computePeriodScores } from "@/lib/utils/periodScores";
@@ -11,6 +11,7 @@ import { EventIcon } from "@/components/ui/EventIcon";
 import { EventLog } from "./EventLog";
 import { PlayerPicker } from "./PlayerPicker";
 import { AssistPicker } from "./AssistPicker";
+import { ChaosMonkey } from "./ChaosMonkey";
 
 type Props = {
   match: Match;
@@ -41,6 +42,16 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
   } | null>(null);
   const [saving, setSaving] = useState(false);
   const [minuteInput, setMinuteInput] = useState("");
+  const [syncAlert, setSyncAlert] = useState<string | null>(null);
+  const alertTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const raiseSyncAlert = useCallback((message: string) => {
+    setSyncAlert(message);
+    if (alertTimer.current) clearTimeout(alertTimer.current);
+    alertTimer.current = setTimeout(() => setSyncAlert(null), 5000);
+  }, []);
+
+  useEffect(() => () => { if (alertTimer.current) clearTimeout(alertTimer.current); }, []);
   
   // Basketball 2-Stage Scoring UI States
   const [basketballIntent, setBasketballIntent] = useState<{
@@ -88,7 +99,10 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
           .select("*, player:players!match_events_player_id_fkey(*), team:teams(*)")
           .eq("id", payload.new.id)
           .single();
-        if (data) setEvents((prev) => [data as MatchEvent, ...prev]);
+        // Dedupe: our own optimistic insert already confirmed this row.
+        if (data) setEvents((prev) =>
+          prev.some((e) => e.id === data.id) ? prev : [data as MatchEvent, ...prev]
+        );
       })
       .on("postgres_changes", {
         event: "DELETE", schema: "public", table: "match_events",
@@ -273,39 +287,125 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
     setBasketballIntent(null);
   }
 
+  /** Period-close tokens that invalidate late-arriving score packets. */
+  const PERIOD_CLOSE_TYPES = ["quarter_end", "set_end", "half_end", "match_end"];
+
   async function logEvent(eventType: any, teamId: string, player: any, assistPlayer: any = null) {
-  setSaving(true);
+    setSaving(true);
 
-  await supabase.from("match_events").insert({
-    match_id: match.id,
-    event_type: eventType.type,
-    team_id: teamId,
-    player_id: player?.id || null,
-    assist_player_id: assistPlayer?.id || null,
-    period: match.current_period || 1,
-    match_minute: minuteInput ? parseInt(minuteInput, 10) : null,
-    details: eventType.type.startsWith("missed_") ? { missed: true } : null
-  });
-
-  // Update score if event affects it
-  if (eventType.affects_score && eventType.score_value) {
+    const period = match.current_period || 1;
+    const affectsScore = Boolean(eventType.affects_score && eventType.score_value);
     const isHome = teamId === match.home_team_id;
-    const newHomeScore = isHome
-      ? (match.home_score ?? 0) + eventType.score_value
-      : (match.home_score ?? 0);
-    const newAwayScore = !isHome
-      ? (match.away_score ?? 0) + eventType.score_value
-      : (match.away_score ?? 0);
 
-    await supabase.from("matches").update({
-      home_score: newHomeScore,
-      away_score: newAwayScore,
-    }).eq("id", match.id);
+    // ── Optimistic apply ────────────────────────────────────────────────
+    const tempId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+    const optimistic: MatchEvent = {
+      id: tempId,
+      match_id: match.id,
+      event_type: eventType.type,
+      team_id: teamId,
+      player_id: player?.id ?? null,
+      assist_player_id: assistPlayer?.id ?? null,
+      period,
+      match_minute: minuteInput ? parseInt(minuteInput, 10) : null,
+      details: eventType.type.startsWith("missed_") ? { missed: true } : null,
+      created_at: new Date().toISOString(),
+      created_by: "",
+      player: player ?? undefined,
+      team: isHome ? match.home_team : match.away_team,
+    };
+    const prevScores = { home: match.home_score ?? 0, away: match.away_score ?? 0 };
+    setEvents((prev) => [optimistic, ...prev]);
+    if (affectsScore) {
+      setMatch((prev) => ({
+        ...prev,
+        home_score: isHome ? (prev.home_score ?? 0) + eventType.score_value : prev.home_score,
+        away_score: !isHome ? (prev.away_score ?? 0) + eventType.score_value : prev.away_score,
+      }));
+    }
+
+    const rollback = (reason: string) => {
+      setEvents((prev) => prev.filter((e) => e.id !== tempId));
+      if (affectsScore) {
+        setMatch((prev) => ({ ...prev, home_score: prevScores.home, away_score: prevScores.away }));
+      }
+      raiseSyncAlert(reason);
+      setSaving(false);
+    };
+
+    // ── Backend business-logic check: a period-close token committed for
+    // this period (e.g. another device already ended the quarter) rejects
+    // late score packets. Verify against the server, not local state.
+    if (affectsScore) {
+      const { data: closers, error: checkError } = await supabase
+        .from("match_events")
+        .select("id, event_type, period")
+        .eq("match_id", match.id)
+        .eq("period", period)
+        .in("event_type", PERIOD_CLOSE_TYPES)
+        .limit(1);
+      if (checkError) {
+        rollback("Sync check failed — event rolled back. Verify your connection and retry.");
+        return;
+      }
+      if (closers && closers.length > 0) {
+        rollback(
+          `Rejected: ${eventType.label ?? eventType.type} arrived after the period-end token was committed. State rolled back.`
+        );
+        return;
+      }
+    }
+
+    // ── Commit ──────────────────────────────────────────────────────────
+    const { data: inserted, error: insertError } = await supabase
+      .from("match_events")
+      .insert({
+        match_id: match.id,
+        event_type: eventType.type,
+        team_id: teamId,
+        player_id: player?.id || null,
+        assist_player_id: assistPlayer?.id || null,
+        period,
+        match_minute: minuteInput ? parseInt(minuteInput, 10) : null,
+        details: eventType.type.startsWith("missed_") ? { missed: true } : null,
+      })
+      .select("*, player:players!match_events_player_id_fkey(*), team:teams(*)")
+      .single();
+
+    if (insertError || !inserted) {
+      rollback(
+        insertError?.message
+          ? `Sync failed: ${insertError.message}. Event rolled back.`
+          : "Sync failed — event rolled back."
+      );
+      return;
+    }
+
+    // Swap the optimistic ghost for the confirmed server row (dedupe against
+    // the realtime channel which may have already delivered it).
+    setEvents((prev) => {
+      const withoutGhost = prev.filter((e) => e.id !== tempId);
+      return withoutGhost.some((e) => e.id === inserted.id)
+        ? withoutGhost
+        : [inserted as MatchEvent, ...withoutGhost];
+    });
+
+    if (affectsScore) {
+      const { error: scoreError } = await supabase
+        .from("matches")
+        .update({
+          home_score: isHome ? prevScores.home + eventType.score_value : prevScores.home,
+          away_score: !isHome ? prevScores.away + eventType.score_value : prevScores.away,
+        })
+        .eq("id", match.id);
+      if (scoreError) {
+        raiseSyncAlert("Event saved, but the scoreboard update failed to sync. Score will correct on next refresh.");
+      }
+    }
+
+    setMinuteInput("");
+    setSaving(false);
   }
-
-  setMinuteInput("");
-  setSaving(false);
-}
 
   async function undoLast() {
     const last = events[0];
@@ -341,6 +441,24 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
 
   return (
     <div className="min-h-screen bg-vanguard-charcoal flex flex-col">
+      {/* Sync rollback alert — Monaco Crimson */}
+      {syncAlert && (
+        <div
+          role="alert"
+          className="sticky top-0 z-50 flex items-center gap-3 bg-vanguard-crimson text-white px-4 py-3 shadow-lg shadow-vanguard-crimson/30 animate-in slide-in-from-top duration-200"
+        >
+          <AlertTriangle className="h-5 w-5 shrink-0" />
+          <p className="flex-1 text-sm font-semibold leading-snug">{syncAlert}</p>
+          <button
+            aria-label="Dismiss alert"
+            onClick={() => setSyncAlert(null)}
+            className="grid place-items-center h-7 w-7 rounded-lg bg-white/15 hover:bg-white/25 transition active:scale-95"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-gray-800 px-4 py-3 flex items-center justify-between">
         <button onClick={() => router.push("/admin")} className="inline-flex items-center gap-1 text-gray-400 hover:text-white text-sm">
@@ -521,6 +639,9 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
           <Section label="Event Log">
             <EventLog events={events} sport={sport} />
           </Section>
+
+          {/* Chaos engineering panel — development builds only */}
+          {process.env.NODE_ENV === "development" && <ChaosMonkey />}
         </div>
       )}
 

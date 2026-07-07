@@ -26,7 +26,9 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-40 w-full">
-      <div className="glass-strong border-x-0 border-t-0">
+      <div className="relative glass-strong border-x-0 border-t-0">
+        {/* Sharp volt tracking line */}
+        <div aria-hidden className="absolute bottom-0 inset-x-0 h-px bg-vanguard-volt/25" />
         <div className="max-w-5xl mx-auto px-4 sm:px-5 h-16 flex items-center justify-between gap-4">
           {/* Brand lockup */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">

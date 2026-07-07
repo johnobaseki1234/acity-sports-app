@@ -24,7 +24,9 @@ export default function BottomNav() {
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 pb-safe">
-      <div className="mx-3 mb-2 glass-strong rounded-3xl shadow-xl shadow-black/10">
+      <div className="relative mx-3 mb-2 glass-strong rounded-3xl shadow-xl shadow-black/40 overflow-hidden">
+        {/* Sharp volt tracking line */}
+        <div aria-hidden className="absolute top-0 inset-x-4 h-px bg-vanguard-volt/25" />
         <div className="grid grid-cols-5">
           {ITEMS.map(({ label, Icon, href, match }) => {
             const active = match(pathname);

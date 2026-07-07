@@ -3,9 +3,27 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { computeStandings } from "@/lib/utils/standings";
 import { SportIcon } from "@/components/ui/SportIcon";
-import { Sparkles, Trophy, Swords } from "lucide-react";
+import { Trophy, Swords } from "lucide-react";
 import type { Match, Season, Sport, Team } from "@/lib/supabase/types";
-import TeamForm from "@/components/matches/TeamForm";
+
+type FormResult = "W" | "D" | "L";
+
+/** Last 5 results for a team, oldest → newest, from the season's match list. */
+function computeForm(teamId: string, matches: Match[]): FormResult[] {
+  return matches
+    .filter(
+      (m) =>
+        m.status === "finished" &&
+        (m.home_team_id === teamId || m.away_team_id === teamId)
+    )
+    .slice(-5)
+    .map((m) => {
+      const isHome = m.home_team_id === teamId;
+      const us = isHome ? m.home_score : m.away_score;
+      const them = isHome ? m.away_score : m.home_score;
+      return us > them ? "W" : us < them ? "L" : "D";
+    });
+}
 
 const MATCH_SELECT = `
   *,
@@ -77,79 +95,115 @@ export default async function StandingsPage({ params }: { params: Promise<{ spor
     <div className="space-y-8">
       <PageHeader sport={sport as Sport} season={season as Season} activeSportSlug={sportSlug} />
 
-      {/* Regular Season Table */}
+      {/* Regular Season — SofaScore-density grid */}
       <section>
         <SectionTitle icon={<Trophy className="h-5 w-5" />} label="Regular Season" />
-        <div className="overflow-x-auto bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl shadow-lg">
-          <table className="w-full min-w-[520px] text-sm">
-            <thead className="bg-zinc-50 dark:bg-zinc-800/60 text-xs uppercase text-zinc-400 dark:text-zinc-500 sticky top-0">
+        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-zinc-900/70 backdrop-blur-xl">
+          <table className="w-full min-w-[620px] text-sm">
+            <thead className="bg-white/[0.03] border-b border-white/10 text-[10px] uppercase tracking-wider text-zinc-500">
               <tr>
-                <th className="px-3 py-3.5 text-left font-bold">Team</th>
-                <th className="px-2 py-3.5 text-center font-bold">P</th>
-                <th className="px-2 py-3.5 text-center font-bold">W</th>
-                {!isBasketball && <th className="px-2 py-3.5 text-center font-bold">D</th>}
-                <th className="px-2 py-3.5 text-center font-bold">L</th>
-                <th className="px-2 py-3.5 text-center font-bold">{isBasketball ? "PF" : "F"}</th>
-                <th className="px-2 py-3.5 text-center font-bold">{isBasketball ? "PA" : "A"}</th>
-                <th className="px-2 py-3.5 text-center font-bold">{isBasketball ? "+/−" : "GD"}</th>
-                <th className="px-3 py-3.5 text-center font-bold">PTS</th>
+                <th className="pl-3 pr-1 py-2.5 text-left font-black w-8">#</th>
+                <th className="px-2 py-2.5 text-left font-black">Team</th>
+                <th className="px-1.5 py-2.5 text-center font-black">P</th>
+                <th className="px-1.5 py-2.5 text-center font-black">W</th>
+                {!isBasketball && <th className="px-1.5 py-2.5 text-center font-black">D</th>}
+                <th className="px-1.5 py-2.5 text-center font-black">L</th>
+                <th className="px-1.5 py-2.5 text-center font-black hidden sm:table-cell">{isBasketball ? "PF" : "F"}</th>
+                <th className="px-1.5 py-2.5 text-center font-black hidden sm:table-cell">{isBasketball ? "PA" : "A"}</th>
+                <th className="px-1.5 py-2.5 text-center font-black">{isBasketball ? "+/−" : "GD"}</th>
+                <th className="px-2 py-2.5 text-center font-black text-vanguard-volt">PTS</th>
+                <th className="px-3 py-2.5 text-right font-black">Form</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-zinc-100 dark:divide-zinc-800 text-zinc-700 dark:text-zinc-200">
-              {table.map((row, index) => (
-                <tr
-                  key={row.team_id}
-                  className={
-                    index === 0
-                      ? "bg-vanguard-volt/10 dark:bg-vanguard-volt/10"
-                      : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
-                  }
-                >
-                  <td className="px-3 py-3.5">
-                    <div className="flex items-center gap-2.5">
+            <tbody className="text-zinc-300">
+              {table.map((row, index) => {
+                const isLeader = index === 0;
+                const isCutoff = index === 3 && table.length > 4;
+                const form = computeForm(row.team_id, (matches ?? []) as Match[]);
+                return (
+                  <tr
+                    key={row.team_id}
+                    className={`h-10 transition-colors hover:bg-white/[0.04] ${
+                      isLeader ? "bg-vanguard-volt/[0.06]" : ""
+                    } ${
+                      isCutoff
+                        ? "border-b-2 border-vanguard-volt/30"
+                        : "border-b border-white/5"
+                    }`}
+                  >
+                    <td className="pl-3 pr-1 py-1.5">
                       <span
-                        className={`grid place-items-center w-6 h-6 rounded-lg text-[11px] font-black tabular-nums shrink-0 ${
-                          index === 0 ? "bg-vanguard-volt text-black" : "text-zinc-400"
+                        className={`grid place-items-center w-5 h-5 rounded text-[10px] font-black tabular-nums ${
+                          isLeader
+                            ? "bg-vanguard-volt text-black shadow-sm shadow-vanguard-volt/40"
+                            : index < 4
+                            ? "text-vanguard-volt border border-vanguard-volt/30"
+                            : "text-zinc-500"
                         }`}
                       >
                         {index + 1}
                       </span>
-                      <span
-                        className="h-7 w-7 rounded-lg shrink-0 hidden sm:block"
-                        style={{ background: row.team?.primary_color ?? "#52525b" }}
-                      />
-                      <span className="font-bold text-zinc-900 dark:text-white truncate">
-                        {row.team?.name}
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="grid place-items-center h-5 w-5 rounded text-[8px] font-black text-white shrink-0"
+                          style={{ background: row.team?.primary_color ?? "#52525b" }}
+                        >
+                          {row.team?.short_name?.slice(0, 2).toUpperCase()}
+                        </span>
+                        <span className={`truncate text-[13px] ${isLeader ? "font-black text-white" : "font-semibold text-zinc-200"}`}>
+                          {row.team?.name}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-1.5 py-1.5 text-center tabular-nums text-xs">{row.played}</td>
+                    <td className="px-1.5 py-1.5 text-center tabular-nums text-xs font-bold text-zinc-200">{row.won}</td>
+                    {!isBasketball && (
+                      <td className="px-1.5 py-1.5 text-center tabular-nums text-xs">{row.drawn}</td>
+                    )}
+                    <td className="px-1.5 py-1.5 text-center tabular-nums text-xs">{row.lost}</td>
+                    <td className="px-1.5 py-1.5 text-center tabular-nums text-xs hidden sm:table-cell">{row.goals_for}</td>
+                    <td className="px-1.5 py-1.5 text-center tabular-nums text-xs hidden sm:table-cell">{row.goals_against}</td>
+                    <td
+                      className={`px-1.5 py-1.5 text-center tabular-nums text-xs font-black ${
+                        row.goal_diff > 0
+                          ? "text-vanguard-volt"
+                          : row.goal_diff < 0
+                          ? "text-vanguard-crimson"
+                          : "text-zinc-500"
+                      }`}
+                    >
+                      {row.goal_diff > 0 ? "+" : ""}
+                      {row.goal_diff}
+                    </td>
+                    <td className="px-2 py-1.5 text-center">
+                      <span className={`text-sm font-black tabular-nums ${isLeader ? "text-vanguard-volt" : "text-white"}`}>
+                        {row.points}
                       </span>
-                    </div>
-                  </td>
-                  <td className="px-2 py-3.5 text-center tabular-nums">{row.played}</td>
-                  <td className="px-2 py-3.5 text-center tabular-nums">{row.won}</td>
-                  {!isBasketball && (
-                    <td className="px-2 py-3.5 text-center tabular-nums">{row.drawn}</td>
-                  )}
-                  <td className="px-2 py-3.5 text-center tabular-nums">{row.lost}</td>
-                  <td className="px-2 py-3.5 text-center tabular-nums">{row.goals_for}</td>
-                  <td className="px-2 py-3.5 text-center tabular-nums">{row.goals_against}</td>
-                  <td
-                    className={`px-2 py-3.5 text-center tabular-nums font-semibold ${
-                      row.goal_diff > 0
-                        ? "text-green-600 dark:text-green-400"
-                        : row.goal_diff < 0
-                        ? "text-red-600 dark:text-red-400"
-                        : "text-zinc-400"
-                    }`}
-                  >
-                    {row.goal_diff > 0 ? "+" : ""}
-                    {row.goal_diff}
-                  </td>
-                  <td className="px-3 py-3.5 text-center font-black tabular-nums text-zinc-900 dark:text-white">
-                    {row.points}
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-3 py-1.5">
+                      <div className="flex items-center justify-end gap-1">
+                        {form.length === 0 ? (
+                          <span className="text-[10px] text-zinc-600">—</span>
+                        ) : (
+                          form.map((r, i) => <FormBlock key={i} result={r} latest={i === form.length - 1} />)
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
+        </div>
+        <div className="flex items-center gap-4 mt-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-sm bg-vanguard-volt" /> Playoff line (top 4)
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2 w-2 rounded-sm bg-vanguard-crimson" /> Loss form
+          </span>
         </div>
         {table.length === 0 && (
           <EmptyState sport={sport as Sport} message="No teams have been added to this season" />
@@ -178,7 +232,7 @@ function FootballCupSection({ teams }: { teams: StandingRow[] }) {
   return (
     <section>
       <SectionTitle icon={<Swords className="h-5 w-5" />} label="Cup Tournament" />
-      <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-lg space-y-4">
+      <div className="rounded-2xl border border-white/10 bg-zinc-900/70 backdrop-blur-xl p-5 space-y-4">
         <p className="text-xs text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wide">
           Single-elimination · Top {qualifiers.length} from regular season
         </p>
@@ -270,7 +324,7 @@ function BasketballPlayoffsSection({ teams }: { teams: StandingRow[] }) {
   return (
     <section>
       <SectionTitle icon={<Swords className="h-5 w-5" />} label="Post-Season Playoffs" />
-      <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl p-5 shadow-lg space-y-4">
+      <div className="rounded-2xl border border-white/10 bg-zinc-900/70 backdrop-blur-xl p-5 space-y-4">
         <p className="text-xs text-zinc-400 dark:text-zinc-500 font-medium uppercase tracking-wide">
           NBA-style · Best of 3 · Top {seeds.length} from regular season
         </p>
@@ -404,7 +458,7 @@ function BracketTeamRow({
   color?: string | null;
 }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2.5 bg-white dark:bg-zinc-900">
+    <div className="flex items-center gap-2 px-3 py-2.5 bg-zinc-900">
       {seed !== undefined && (
         <span className="text-[10px] font-black text-zinc-400 w-3 shrink-0">{seed}</span>
       )}
@@ -470,6 +524,24 @@ function PageHeader({
   );
 }
 
+function FormBlock({ result, latest }: { result: FormResult; latest?: boolean }) {
+  const styles: Record<FormResult, string> = {
+    W: "bg-vanguard-volt text-black shadow-sm shadow-vanguard-volt/50",
+    L: "bg-vanguard-crimson text-white shadow-sm shadow-vanguard-crimson/50",
+    D: "bg-zinc-700 text-zinc-300",
+  };
+  return (
+    <span
+      title={result === "W" ? "Win" : result === "L" ? "Loss" : "Draw"}
+      className={`grid place-items-center h-[18px] w-[18px] rounded text-[9px] font-black select-none ${styles[result]} ${
+        latest ? "ring-1 ring-white/40" : ""
+      }`}
+    >
+      {result}
+    </span>
+  );
+}
+
 function SectionTitle({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div className="flex items-center gap-2 mb-3 px-0.5">
@@ -481,7 +553,7 @@ function SectionTitle({ icon, label }: { icon: React.ReactNode; label: string })
 
 function EmptyState({ sport, message }: { sport: Sport; message: string }) {
   return (
-    <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl py-16 text-center shadow-lg">
+    <div className="rounded-2xl border border-white/10 bg-zinc-900/70 backdrop-blur-xl py-16 text-center">
       <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-vanguard-volt/10 text-vanguard-volt">
         <SportIcon slug={sport.slug} className="h-8 w-8" />
       </div>

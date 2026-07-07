@@ -1,12 +1,51 @@
 import { createClient } from "../../../lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Award } from "lucide-react";
+import { Award, Play, Users } from "lucide-react";
 import FollowButton from "../../../components/ui/FollowButton";
 import type { Match, Player } from "../../../lib/supabase/types";
 
 interface TeamPageProps {
   params: Promise<{ slug: string }>;
+}
+
+type CareerStats = {
+  player_id: string;
+  sport_slug?: string | null;
+  goals?: number | null;
+  saves?: number | null;
+  yellow_cards?: number | null;
+  red_cards?: number | null;
+  two_pointers_made?: number | null;
+  three_pointers_made?: number | null;
+  free_throws_made?: number | null;
+  rebounds?: number | null;
+  steals?: number | null;
+  blocks?: number | null;
+};
+
+function telemetry(stats: CareerStats | undefined): { label: string; value: number }[] {
+  if (!stats) return [
+    { label: "PTS", value: 0 },
+    { label: "REB", value: 0 },
+    { label: "STL", value: 0 },
+  ];
+  if (stats.sport_slug === "football") {
+    return [
+      { label: "GLS", value: stats.goals ?? 0 },
+      { label: "SAV", value: stats.saves ?? 0 },
+      { label: "CRD", value: (stats.yellow_cards ?? 0) + (stats.red_cards ?? 0) },
+    ];
+  }
+  const pts =
+    (stats.two_pointers_made ?? 0) * 2 +
+    (stats.three_pointers_made ?? 0) * 3 +
+    (stats.free_throws_made ?? 0);
+  return [
+    { label: "PTS", value: pts },
+    { label: "REB", value: stats.rebounds ?? 0 },
+    { label: "STL", value: stats.steals ?? 0 },
+  ];
 }
 
 export default async function TeamProfilePage({ params }: TeamPageProps) {
@@ -53,6 +92,18 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
   const retired = allPlayers.filter((p) => p.status === "retired");
   const alumni = allPlayers.filter((p) => p.status === "alumni");
 
+  // Career telemetry for the scout cards.
+  const statsByPlayer = new Map<string, CareerStats>();
+  if (allPlayers.length > 0) {
+    const { data: careerStats } = await supabase
+      .from("player_stats")
+      .select("*")
+      .in("player_id", allPlayers.map((p) => p.id));
+    for (const row of (careerStats ?? []) as CareerStats[]) {
+      statsByPlayer.set(row.player_id, row);
+    }
+  }
+
   const allMatches = (matches ?? []) as Match[];
   const results = allMatches
     .filter((m) => m.status === "finished")
@@ -80,103 +131,112 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
   });
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="max-w-6xl mx-auto py-4 space-y-8">
+      {/* Team masthead */}
       <div
-        className="rounded-2xl p-6 sm:p-8 text-white mb-8 shadow-md"
+        className="rounded-2xl p-6 sm:p-8 text-white border border-white/10 relative overflow-hidden"
         style={{
-          background: `linear-gradient(135deg, ${team.primary_color || "#1e3a8a"}, ${team.secondary_color || "#3b82f6"})`,
+          background: `linear-gradient(135deg, ${team.primary_color || "#0D0E10"}cc, #0D0E10 70%)`,
         }}
       >
-        <div className="flex flex-col sm:flex-row items-center gap-6">
+        <div className="relative flex flex-col sm:flex-row items-center gap-6">
           {team.logo_url ? (
             <img src={team.logo_url} alt={team.name} className="w-24 h-24 object-contain bg-white/10 rounded-xl p-2" />
           ) : (
-            <div className="w-24 h-24 bg-white/20 rounded-xl flex items-center justify-center text-3xl font-bold">
+            <div className="w-24 h-24 bg-white/10 border border-white/15 rounded-xl flex items-center justify-center text-3xl font-black">
               {team.short_name}
             </div>
           )}
           <div className="text-center sm:text-left flex-1">
-            <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">{team.name}</h1>
-            <p className="text-white/80 font-medium mt-1">Record: {wins}W - {draws}D - {losses}L</p>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-tight">{team.name}</h1>
+            <p className="text-white/70 font-semibold mt-1 tabular-nums">
+              Record: <span className="text-vanguard-volt">{wins}W</span> · {draws}D ·{" "}
+              <span className="text-vanguard-crimson">{losses}L</span>
+            </p>
             <FollowButton teamId={team.id} />
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-xl p-6 shadow-sm">
-          <h2 className="text-xl font-bold mb-4 text-gray-800 dark:text-zinc-50 border-b border-gray-100 dark:border-zinc-800 pb-2">
-            Roster <span className="text-sm font-normal text-gray-400">({activeRoster.length})</span>
+      {/* Scout Roster Hub */}
+      <section>
+        <div className="flex items-center gap-2 mb-4">
+          <Users className="h-5 w-5 text-vanguard-volt" strokeWidth={2.25} />
+          <h2 className="text-xl font-black tracking-tight text-white">Roster</h2>
+          <span className="rounded-full bg-vanguard-volt/15 text-vanguard-volt text-xs font-black px-2 py-0.5 tabular-nums">
+            {activeRoster.length}
+          </span>
+        </div>
+
+        {activeRoster.length === 0 ? (
+          <p className="text-zinc-500 text-sm">No active players on this team yet.</p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {activeRoster.map((player) => (
+              <ScoutCard
+                key={player.id}
+                player={player}
+                stats={statsByPlayer.get(player.id)}
+                teamColor={team.primary_color}
+              />
+            ))}
+          </div>
+        )}
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-5">
+          <h2 className="text-sm font-black uppercase tracking-wider text-zinc-300 mb-4 pb-2 border-b border-white/10">
+            Upcoming Fixtures
           </h2>
-          {activeRoster.length === 0 ? (
-            <p className="text-gray-500 dark:text-zinc-400 text-sm">No active players on this team yet.</p>
+          {fixtures.length === 0 ? (
+            <p className="text-zinc-500 text-sm">No upcoming matches scheduled.</p>
           ) : (
-            <ul className="divide-y divide-gray-50 dark:divide-zinc-800">
-              {activeRoster.map((player) => (
-                <li key={player.id} className="py-3 flex items-center justify-between gap-3">
-                  <Link href={`/player/${player.id}`} className="hover:text-vanguard-volt dark:hover:text-vanguard-volt transition min-w-0">
-                    <span className="font-mono text-gray-400 mr-2">#{player.jersey_number}</span>
-                    <span className="font-medium text-gray-700 dark:text-zinc-200">{player.name}</span>
-                  </Link>
-                  {player.position && (
-                    <span className="text-xs bg-gray-100 dark:bg-zinc-800 text-gray-600 dark:text-zinc-300 px-2 py-1 rounded shrink-0">
-                      {player.position}
-                    </span>
-                  )}
-                </li>
+            <div className="space-y-2">
+              {fixtures.map((match) => (
+                <Link key={match.id} href={`/match/${match.id}`} className="px-3 py-2.5 rounded-xl border border-white/5 bg-white/[0.03] flex justify-between items-center gap-4 hover:border-vanguard-volt/40 transition">
+                  <span className="text-sm font-semibold text-zinc-200 truncate">
+                    {match.home_team?.name} vs {match.away_team?.name}
+                  </span>
+                  <span className="text-right text-xs text-zinc-500 shrink-0 tabular-nums">
+                    {new Date(match.scheduled_at).toLocaleDateString()}<br />
+                    <span className="font-bold capitalize text-vanguard-volt">{match.status}</span>
+                  </span>
+                </Link>
               ))}
-            </ul>
+            </div>
           )}
         </div>
 
-        <div className="lg:col-span-2 space-y-8">
-          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-            <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Upcoming Fixtures</h2>
-            {fixtures.length === 0 ? (
-              <p className="text-gray-500 text-sm">No upcoming matches scheduled.</p>
-            ) : (
-              <div className="space-y-3">
-                {fixtures.map((match) => (
-                  <Link key={match.id} href={`/match/${match.id}`} className="p-4 border rounded-xl flex justify-between items-center gap-4 bg-gray-50/50 hover:border-vanguard-volt transition">
-                    <span className="text-sm font-medium text-gray-600">{match.home_team?.name} vs {match.away_team?.name}</span>
-                    <span className="text-right text-xs text-gray-500 shrink-0">
-                      {new Date(match.scheduled_at).toLocaleDateString()}<br />
-                      <span className="font-semibold capitalize text-vanguard-volt">{match.status}</span>
-                    </span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <div className="bg-white border border-gray-100 rounded-xl p-6 shadow-sm">
-            <h2 className="text-xl font-bold mb-4 text-gray-800 border-b pb-2">Recent Results</h2>
-            {results.length === 0 ? (
-              <p className="text-gray-500 text-sm">No match results available yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {results.map((match) => (
-                  <Link key={match.id} href={`/match/${match.id}`} className="p-4 border rounded-xl flex justify-between items-center gap-4 hover:border-vanguard-volt transition">
-                    <span className="text-sm text-gray-700">
-                      <strong className={match.home_team_id === team.id ? "text-vanguard-volt" : ""}>{match.home_team?.short_name}</strong>
-                      {" "}{match.home_score} - {match.away_score}{" "}
-                      <strong className={match.away_team_id === team.id ? "text-vanguard-volt" : ""}>{match.away_team?.short_name}</strong>
-                    </span>
-                    <span className="text-xs text-gray-400 shrink-0">{new Date(match.scheduled_at).toLocaleDateString()}</span>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+        <div className="rounded-2xl border border-white/10 bg-zinc-900/70 p-5">
+          <h2 className="text-sm font-black uppercase tracking-wider text-zinc-300 mb-4 pb-2 border-b border-white/10">
+            Recent Results
+          </h2>
+          {results.length === 0 ? (
+            <p className="text-zinc-500 text-sm">No match results available yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {results.map((match) => (
+                <Link key={match.id} href={`/match/${match.id}`} className="px-3 py-2.5 rounded-xl border border-white/5 bg-white/[0.03] flex justify-between items-center gap-4 hover:border-vanguard-volt/40 transition">
+                  <span className="text-sm text-zinc-300 tabular-nums">
+                    <strong className={match.home_team_id === team.id ? "text-vanguard-volt" : "text-white"}>{match.home_team?.short_name}</strong>
+                    {" "}<span className="font-black">{match.home_score} – {match.away_score}</span>{" "}
+                    <strong className={match.away_team_id === team.id ? "text-vanguard-volt" : "text-white"}>{match.away_team?.short_name}</strong>
+                  </span>
+                  <span className="text-xs text-zinc-500 shrink-0 tabular-nums">{new Date(match.scheduled_at).toLocaleDateString()}</span>
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
       {/* Historic archive — preserved without cluttering the active roster */}
       {(alumni.length > 0 || retired.length > 0) && (
-        <div className="mt-10">
+        <div>
           <div className="flex items-center gap-2.5 mb-5">
-            <Award className="h-7 w-7 text-vanguard-volt" strokeWidth={2} />
-            <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-50">Hall of Fame &amp; Archive</h2>
+            <Award className="h-6 w-6 text-vanguard-volt" strokeWidth={2} />
+            <h2 className="text-xl font-black tracking-tight text-white">Hall of Fame &amp; Archive</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <ArchiveGroup
@@ -188,13 +248,86 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
             <ArchiveGroup
               title="Retired Players"
               subtitle="Career stats preserved"
-              accent="from-zinc-500 to-zinc-700"
+              accent="from-zinc-600 to-zinc-800"
               players={retired}
             />
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+/** High-density Hudl-style scout card: telemetry header, position tag, film slot. */
+function ScoutCard({
+  player,
+  stats,
+  teamColor,
+}: {
+  player: Player;
+  stats?: CareerStats;
+  teamColor?: string | null;
+}) {
+  const tiles = telemetry(stats);
+  return (
+    <Link
+      href={`/player/${player.id}`}
+      className="group rounded-2xl border border-white/10 bg-zinc-900/70 overflow-hidden hover:border-vanguard-volt/40 transition-colors"
+    >
+      {/* Career telemetry header */}
+      <div className="grid grid-cols-3 divide-x divide-white/5 bg-white/[0.03] border-b border-white/10">
+        {tiles.map((t) => (
+          <div key={t.label} className="px-2 py-2 text-center">
+            <div className="text-base font-black tabular-nums text-vanguard-volt leading-none">
+              {t.value}
+            </div>
+            <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mt-1">
+              {t.label}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Identity row */}
+      <div className="flex items-center gap-3 px-3 py-3">
+        <span
+          className="grid place-items-center h-10 w-10 shrink-0 rounded-xl font-black text-sm tabular-nums text-white"
+          style={{ background: teamColor ?? "#27272a" }}
+        >
+          {player.jersey_number}
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-bold text-sm text-white truncate group-hover:text-vanguard-volt transition-colors">
+            {player.name}
+          </p>
+          <div className="flex items-center gap-1.5 mt-1">
+            {player.position && (
+              <span className="rounded border border-vanguard-volt/40 text-vanguard-volt text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5">
+                {player.position}
+              </span>
+            )}
+            {player.secondary_position && (
+              <span className="rounded border border-white/15 text-zinc-400 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5">
+                {player.secondary_position}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Game film slot — aspect-locked, Hudl-ready */}
+      <div className="mx-3 mb-3 aspect-video rounded-xl border border-white/10 bg-black/40 grid place-items-center relative overflow-hidden">
+        <div aria-hidden className="absolute inset-0 bg-gradient-to-br from-vanguard-volt/[0.05] to-transparent" />
+        <div className="relative flex flex-col items-center gap-1">
+          <span className="grid place-items-center h-8 w-8 rounded-full bg-white/10 group-hover:bg-vanguard-volt group-hover:text-black text-vanguard-volt transition-colors">
+            <Play className="h-3.5 w-3.5" fill="currentColor" />
+          </span>
+          <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600">
+            Film Room · Soon
+          </span>
+        </div>
+      </div>
+    </Link>
   );
 }
 
@@ -211,24 +344,24 @@ function ArchiveGroup({
 }) {
   if (players.length === 0) return null;
   return (
-    <div className="bg-white dark:bg-zinc-900 border border-gray-100 dark:border-zinc-800 rounded-2xl overflow-hidden shadow-sm">
+    <div className="rounded-2xl border border-white/10 bg-zinc-900/70 overflow-hidden">
       <div className={`bg-gradient-to-r ${accent} px-5 py-4 text-white`}>
-        <h3 className="text-lg font-bold">{title}</h3>
+        <h3 className="text-lg font-black">{title}</h3>
         <p className="text-white/80 text-xs">{subtitle} · {players.length}</p>
       </div>
-      <ul className="divide-y divide-gray-50 dark:divide-zinc-800 p-2">
+      <ul className="divide-y divide-white/5 p-2">
         {players.map((player) => (
           <li key={player.id}>
             <Link
               href={`/player/${player.id}`}
-              className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-zinc-800 transition"
+              className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-white/5 transition"
             >
-              <div className="w-9 h-9 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-gray-500 dark:text-zinc-300 shrink-0">
+              <div className="w-9 h-9 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-xs font-black text-zinc-300 shrink-0 tabular-nums">
                 #{player.jersey_number}
               </div>
-              <span className="font-medium text-gray-700 dark:text-zinc-200">{player.name}</span>
+              <span className="font-semibold text-zinc-200">{player.name}</span>
               {player.position && (
-                <span className="ml-auto text-xs bg-gray-100 dark:bg-zinc-800 text-gray-500 dark:text-zinc-400 px-2 py-1 rounded shrink-0">
+                <span className="ml-auto rounded border border-white/15 text-zinc-400 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 shrink-0">
                   {player.position}
                 </span>
               )}
