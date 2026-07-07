@@ -6,6 +6,11 @@
   --brand-blue: #1e3a5f;
   --brand-red: #c0392b;
   --brand-gold: #f39c12;
+
+  /* Midnight Vanguard tokens (VANGUARD Charter) — used by stealth-mode surfaces for now */
+  --vanguard-charcoal: #0D0E10;
+  --vanguard-volt: #CCFF00;
+  --vanguard-crimson: #E50914;
 }
 
 @layer base {
@@ -16,7 +21,7 @@
 
 @layer components {
   .live-dot {
-    @apply inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse;
+    @apply inline-block w-2 h-2 rounded-full bg-vanguard-volt animate-pulse;
   }
 
   .score-card {
@@ -28,7 +33,7 @@
   }
 
   .sport-pill-active {
-    @apply bg-red-600 text-white shadow-md shadow-red-600/25;
+    @apply bg-vanguard-volt text-black shadow-md shadow-vanguard-volt/25;
   }
 
   .sport-pill-inactive {
@@ -40,11 +45,11 @@
   }
 
   .btn-primary {
-    @apply bg-red-600 text-white px-5 h-12 inline-flex items-center justify-center rounded-2xl font-semibold hover:bg-red-700 transition-all duration-300 active:scale-95;
+    @apply bg-vanguard-volt text-black px-5 h-12 inline-flex items-center justify-center rounded-2xl font-semibold hover:bg-vanguard-volt/90 transition-all duration-300 active:scale-95;
   }
 
   .btn-danger {
-    @apply bg-zinc-900 dark:bg-zinc-700 text-white px-5 h-12 inline-flex items-center justify-center rounded-2xl font-semibold hover:bg-black transition-all duration-300 active:scale-95;
+    @apply bg-vanguard-crimson text-white px-5 h-12 inline-flex items-center justify-center rounded-2xl font-semibold hover:bg-vanguard-crimson/90 transition-all duration-300 active:scale-95;
   }
 
   .btn-ghost {
@@ -52,7 +57,7 @@
   }
 
   .input {
-    @apply w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition;
+    @apply w-full bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-2xl px-4 py-2.5 text-sm text-zinc-900 dark:text-zinc-100 focus:outline-none focus:ring-2 focus:ring-vanguard-volt focus:border-transparent transition;
   }
 
   .label {
@@ -129,8 +134,8 @@
 }
 
 @keyframes pulseGlow {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.0); }
-  50% { box-shadow: 0 0 24px 2px rgba(239, 68, 68, 0.28); }
+  0%, 100% { box-shadow: 0 0 0 0 rgba(204, 255, 0, 0.0); }
+  50% { box-shadow: 0 0 24px 2px rgba(204, 255, 0, 0.28); }
 }
 
 @keyframes floatBlob {

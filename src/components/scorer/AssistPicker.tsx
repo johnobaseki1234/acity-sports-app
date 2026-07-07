@@ -38,7 +38,7 @@ export function AssistPicker({ players, scorerId, onSelect, onCancel }: Props) {
             </button>
           ))}
         </div>
-        <button onClick={onCancel} className="w-full mt-5 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl py-3">
+        <button onClick={onCancel} className="w-full mt-5 bg-vanguard-crimson hover:bg-vanguard-crimson/90 text-white font-bold rounded-xl py-3">
           Cancel
         </button>
       </div>

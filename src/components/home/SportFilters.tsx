@@ -22,7 +22,7 @@ export function SportFilters({ activeSport }: { activeSport?: string }) {
             href={href}
             className={`shrink-0 h-14 px-6 rounded-2xl flex items-center gap-2.5 font-semibold text-sm transition-all duration-300 active:scale-95 ${
               active
-                ? "bg-gradient-to-br from-red-600 to-red-800 text-white shadow-lg shadow-red-500/25 scale-[1.03]"
+                ? "bg-vanguard-volt text-black shadow-lg shadow-vanguard-volt/25 scale-[1.03]"
                 : "glass text-zinc-600 dark:text-zinc-300 hover:scale-105 hover:shadow-md"
             }`}
           >

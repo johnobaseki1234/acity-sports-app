@@ -15,7 +15,7 @@ export default function TeamError({
 
   return (
     <div className="max-w-md mx-auto text-center py-16 px-4">
-      <div className="bg-red-50 text-red-600 w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+      <div className="bg-vanguard-crimson/10 text-vanguard-crimson w-16 h-16 rounded-full flex items-center justify-center text-2xl font-bold mx-auto mb-4">
         !
       </div>
       <h2 className="text-2xl font-bold text-gray-800 mb-2">Failed to Load Team</h2>

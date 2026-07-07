@@ -101,7 +101,7 @@ export default async function StandingsPage({ params }: { params: Promise<{ spor
                   key={row.team_id}
                   className={
                     index === 0
-                      ? "bg-red-50/60 dark:bg-red-500/10"
+                      ? "bg-vanguard-volt/10 dark:bg-vanguard-volt/10"
                       : "hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors"
                   }
                 >
@@ -109,7 +109,7 @@ export default async function StandingsPage({ params }: { params: Promise<{ spor
                     <div className="flex items-center gap-2.5">
                       <span
                         className={`grid place-items-center w-6 h-6 rounded-lg text-[11px] font-black tabular-nums shrink-0 ${
-                          index === 0 ? "bg-red-600 text-white" : "text-zinc-400"
+                          index === 0 ? "bg-vanguard-volt text-black" : "text-zinc-400"
                         }`}
                       >
                         {index + 1}
@@ -445,7 +445,7 @@ function PageHeader({
           <p className="text-sm text-zinc-500 dark:text-zinc-400">{season.name}</p>
         )}
         <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
-          <SportIcon slug={sport.slug} className="h-8 w-8 text-red-600 dark:text-red-500" />
+          <SportIcon slug={sport.slug} className="h-8 w-8 text-vanguard-volt" />
           {sport.name} Standings
         </h1>
       </div>
@@ -457,7 +457,7 @@ function PageHeader({
             href={href}
             className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 ${
               slug === activeSportSlug
-                ? "bg-red-600 text-white shadow-md shadow-red-600/25"
+                ? "bg-vanguard-volt text-black shadow-md shadow-vanguard-volt/25"
                 : "bg-white/70 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800"
             }`}
           >
@@ -473,7 +473,7 @@ function PageHeader({
 function SectionTitle({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div className="flex items-center gap-2 mb-3 px-0.5">
-      <span className="text-red-600 dark:text-red-500">{icon}</span>
+      <span className="text-vanguard-volt">{icon}</span>
       <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{label}</h2>
     </div>
   );
@@ -482,7 +482,7 @@ function SectionTitle({ icon, label }: { icon: React.ReactNode; label: string })
 function EmptyState({ sport, message }: { sport: Sport; message: string }) {
   return (
     <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl py-16 text-center shadow-lg">
-      <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-red-500/10 text-red-600 dark:text-red-500">
+      <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-vanguard-volt/10 text-vanguard-volt">
         <SportIcon slug={sport.slug} className="h-8 w-8" />
       </div>
       <p className="font-medium text-zinc-500 dark:text-zinc-400">{message}</p>

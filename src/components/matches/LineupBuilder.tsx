@@ -145,12 +145,12 @@ export default function LineupBuilder({ teamId, matchId, sportSlug }: Props) {
       <div className="lg:col-span-2 space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-black uppercase tracking-wider text-zinc-800 dark:text-zinc-200 flex items-center gap-2">
-            <Users className="h-4 w-4 text-red-500" /> Tactical Pitch Layout
+            <Users className="h-4 w-4 text-vanguard-volt" /> Tactical Pitch Layout
           </h3>
           <button
             onClick={handleSaveLineup}
             disabled={saving}
-            className="flex items-center gap-2 bg-red-600 hover:bg-red-700 disabled:bg-zinc-700 text-white font-bold text-xs uppercase px-4 py-2 rounded-xl transition-colors shadow-md shadow-red-600/20"
+            className="flex items-center gap-2 bg-vanguard-volt hover:bg-vanguard-volt/90 disabled:bg-zinc-700 text-black font-bold text-xs uppercase px-4 py-2 rounded-xl transition-colors shadow-md shadow-vanguard-volt/20"
           >
             <Save className="h-3.5 w-3.5" /> {saving ? "Syncing..." : "Save Lineup"}
           </button>
@@ -158,7 +158,7 @@ export default function LineupBuilder({ teamId, matchId, sportSlug }: Props) {
 
         {toast && (
           <div className={`p-3 rounded-xl text-xs font-semibold flex items-center gap-2 border ${
-            toast.type === "success" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-red-500/10 border-red-500/20 text-red-400"
+            toast.type === "success" ? "bg-emerald-500/10 border-emerald-500/20 text-emerald-400" : "bg-vanguard-crimson/10 border-vanguard-crimson/20 text-vanguard-crimson"
           }`}>
             {toast.type === "success" ? <CheckCircle className="h-4 w-4" /> : <ShieldAlert className="h-4 w-4" />}
             {toast.msg}
@@ -187,7 +187,7 @@ export default function LineupBuilder({ teamId, matchId, sportSlug }: Props) {
                   assignedPlayer 
                     ? "bg-zinc-950 text-white border-amber-500 scale-105 shadow-[0_0_12px_rgba(245,158,11,0.3)]" 
                     : isSelected 
-                    ? "bg-red-600 text-white border-white animate-bounce" 
+                    ? "bg-vanguard-volt text-black border-white animate-bounce"
                     : "bg-white/10 text-white/60 border-white/20 hover:bg-white/20 hover:text-white"
                 }`}>
                   {assignedPlayer ? `#${assignedPlayer.jersey_number}` : slot.label}
@@ -224,7 +224,7 @@ export default function LineupBuilder({ teamId, matchId, sportSlug }: Props) {
                 className={`w-full flex items-center justify-between p-2.5 rounded-xl text-left border transition-all text-xs ${
                   !selectedSlot 
                     ? "opacity-50 border-transparent cursor-not-allowed" 
-                    : "border-zinc-200 dark:border-gray-800/80 hover:border-red-500 dark:hover:border-red-500 bg-white dark:bg-[#111827]"
+                    : "border-zinc-200 dark:border-gray-800/80 hover:border-vanguard-volt dark:hover:border-vanguard-volt bg-white dark:bg-[#111827]"
                 }`}
               >
                 <div className="min-w-0">

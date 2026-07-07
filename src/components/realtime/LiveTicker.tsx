@@ -44,7 +44,11 @@ const LIVE_SELECT = `
 
 export function LiveTicker() {
   const pathname = usePathname();
-  const isAdmin = pathname.startsWith("/admin") || pathname.startsWith("/scorer");
+  const isAdmin =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/scorer") ||
+    pathname.startsWith("/stealth") ||
+    pathname.startsWith("/login");
 
   const [matches, setMatches] = useState<LiveMatch[]>([]);
   const { showToast } = useToast();
@@ -184,7 +188,7 @@ export function LiveTicker() {
   if (isAdmin || matches.length === 0) return null;
 
   return (
-    <div className="bg-gradient-to-r from-red-700 to-red-600 text-white dark:from-zinc-900 dark:to-zinc-900 border-b border-red-800/40 dark:border-zinc-800">
+    <div className="bg-gradient-to-r from-vanguard-crimson to-vanguard-crimson/90 text-white dark:from-zinc-900 dark:to-zinc-900 border-b border-vanguard-crimson/40 dark:border-zinc-800">
       <div className="max-w-5xl mx-auto px-4 py-2 flex items-center gap-3 overflow-x-auto scrollbar-hide">
         <span className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wide shrink-0">
           <Radio className="h-3.5 w-3.5 animate-pulse" /> Live

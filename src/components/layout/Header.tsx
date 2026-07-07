@@ -17,7 +17,13 @@ const NAV = [
 export default function Header() {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin") || pathname.startsWith("/scorer")) return null;
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/scorer") ||
+    pathname.startsWith("/stealth") ||
+    pathname.startsWith("/login")
+  )
+    return null;
 
   return (
     <header className="sticky top-0 z-40 w-full">
@@ -25,12 +31,12 @@ export default function Header() {
         <div className="max-w-5xl mx-auto px-4 sm:px-5 h-16 flex items-center justify-between gap-4">
           {/* Brand lockup */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <span className="grid place-items-center h-10 w-10 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 text-white shadow-lg shadow-red-600/25 transition-transform group-active:scale-95">
+            <span className="grid place-items-center h-10 w-10 rounded-2xl bg-vanguard-volt text-black shadow-lg shadow-vanguard-volt/25 transition-transform group-active:scale-95">
               <Trophy className="h-5 w-5" strokeWidth={2.25} />
             </span>
             <span className="leading-tight">
               <span className="block font-extrabold tracking-tight text-[15px] text-zinc-900 dark:text-white">
-                ACITY <span className="text-red-600 dark:text-red-500">SPORTS</span>
+                ACITY <span className="text-vanguard-volt">SPORTS</span>
               </span>
               <span className="block text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
                 Live University Sports
@@ -48,7 +54,7 @@ export default function Header() {
                   href={item.href}
                   className={`px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
                     active
-                      ? "bg-red-600 text-white shadow-md shadow-red-600/25"
+                      ? "bg-vanguard-volt text-black shadow-md shadow-vanguard-volt/25"
                       : "text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5"
                   }`}
                 >
@@ -70,7 +76,7 @@ export default function Header() {
               className="relative grid place-items-center h-10 w-10 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5 transition active:scale-95"
             >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-900" />
+              <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-vanguard-crimson ring-2 ring-white dark:ring-zinc-900" />
             </button>
             
             <button

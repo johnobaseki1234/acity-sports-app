@@ -168,7 +168,7 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
         {player.team && (
           <Link
             href={`/team/${player.team.slug}`}
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-red-600 dark:hover:text-white transition-colors"
+            className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-vanguard-volt dark:hover:text-white transition-colors"
           >
             <ArrowLeft className="h-4 w-4 stroke-[2.5]" /> Back to {player.team.name}
           </Link>
@@ -176,7 +176,7 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
 
         {/* Premium Profile Info Header Panel */}
         <div className="bg-white dark:bg-[#111827] border border-zinc-200/80 dark:border-gray-800 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row sm:items-center justify-between gap-6 relative overflow-hidden shadow-sm dark:shadow-2xl">
-          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-red-600 to-red-800" />
+          <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-gradient-to-b from-vanguard-volt to-vanguard-crimson" />
 
           <div className="flex items-center gap-5">
             {player.photo_url ? (
@@ -198,13 +198,13 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
                   {player.name}
                 </h1>
                 {blocks.length > 1 && (
-                  <span className="text-[9px] font-black uppercase tracking-wider bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 px-2 py-0.5 rounded-md flex items-center gap-1">
+                  <span className="text-[9px] font-black uppercase tracking-wider bg-vanguard-volt/10 dark:bg-vanguard-volt/10 text-vanguard-volt dark:text-vanguard-volt px-2 py-0.5 rounded-md flex items-center gap-1">
                     <Trophy className="h-2.5 w-2.5" /> Multi-Sport
                   </span>
                 )}
               </div>
               <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1 font-medium">
-                {player.team?.name || "Independent"} · <span className="text-red-600 dark:text-red-500 font-semibold">{player.position || "Athlete"}</span>
+                {player.team?.name || "Independent"} · <span className="text-vanguard-volt font-semibold">{player.position || "Athlete"}</span>
                 {player.secondary_position ? ` / ${player.secondary_position}` : ""}
               </p>
             </div>
@@ -222,7 +222,7 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
         {/* Dynamic Presentation Component Tabs Area */}
         <div className="bg-white dark:bg-[#111827] border border-zinc-200/80 dark:border-gray-800 rounded-2xl p-4 sm:p-6 shadow-sm">
           <div className="flex items-center gap-2 mb-4 border-b border-zinc-100 dark:border-gray-800 pb-3">
-            <Activity className="h-4 w-4 text-red-500" />
+            <Activity className="h-4 w-4 text-vanguard-volt" />
             <h3 className="text-xs font-black uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
               Aggregated Metrics & Historical Events Log
             </h3>

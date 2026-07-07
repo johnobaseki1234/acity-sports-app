@@ -10,11 +10,11 @@ export function Hero({
   seasonName: string;
 }) {
   return (
-    <section className="relative overflow-hidden rounded-[32px] bg-gradient-to-br from-red-700 via-red-600 to-black text-white shadow-2xl shadow-red-600/25">
+    <section className="relative overflow-hidden rounded-[32px] bg-vanguard-charcoal text-white shadow-2xl shadow-vanguard-crimson/25">
       {/* Glow / texture */}
       <div aria-hidden className="absolute inset-0">
-        <div className="absolute -top-16 -right-10 h-56 w-56 rounded-full bg-white/15 blur-3xl" />
-        <div className="absolute bottom-0 left-1/4 h-40 w-40 rounded-full bg-red-400/25 blur-3xl" />
+        <div className="absolute -top-16 -right-10 h-56 w-56 rounded-full bg-vanguard-volt/20 blur-3xl" />
+        <div className="absolute bottom-0 left-1/4 h-40 w-40 rounded-full bg-vanguard-crimson/25 blur-3xl" />
         <div className="absolute inset-0 bg-grid opacity-15" />
       </div>
 
@@ -23,7 +23,7 @@ export function Hero({
           <span className="h-1.5 w-1.5 rounded-full bg-white animate-pulse" /> Live University Sports
         </span>
 
-        <h1 className="mt-4 text-4xl sm:text-6xl font-black tracking-tight leading-[0.95]">ACITY SPORTS</h1>
+        <h1 className="mt-4 text-4xl sm:text-6xl font-black tracking-tight leading-[0.95]">VANGUARD</h1>
         <p className="mt-3 max-w-md text-sm sm:text-base text-white/85 font-medium">
           Live university sports scores, fixtures and standings — all in one place.
         </p>

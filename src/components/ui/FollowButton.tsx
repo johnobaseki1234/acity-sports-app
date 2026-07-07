@@ -17,10 +17,10 @@ export default function FollowButton({ teamId }: FollowButtonProps) {
       className={`mt-3 inline-flex items-center gap-2 h-12 px-5 rounded-2xl text-sm font-semibold transition-all duration-300 active:scale-95 ${
         following
           ? "bg-white/25 text-white border border-white/40 hover:bg-white/35"
-          : "bg-white text-red-600 hover:bg-red-50 shadow-lg"
+          : "bg-vanguard-volt text-black hover:bg-vanguard-volt/90 shadow-lg"
       }`}
     >
-      <Star className={`h-4 w-4 ${following ? "fill-white" : "fill-red-600"}`} />
+      <Star className={`h-4 w-4 ${following ? "fill-white" : "fill-black"}`} />
       {following ? "Following" : "Follow Team"}
     </button>
   );

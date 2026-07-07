@@ -17,7 +17,7 @@ export default async function MatchesPage() {
   const matches = (data ?? []) as Match[];
 
   const statusColors: Record<string, string> = {
-    live: "text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-500/20",
+    live: "text-vanguard-volt dark:text-vanguard-volt bg-vanguard-volt/10 dark:bg-vanguard-volt/20",
     halftime: "text-orange-700 dark:text-orange-300 bg-orange-100 dark:bg-orange-500/20",
     finished: "text-green-700 dark:text-green-300 bg-green-100 dark:bg-green-500/20",
     scheduled: "text-blue-700 dark:text-blue-300 bg-blue-100 dark:bg-blue-500/20",
@@ -34,7 +34,7 @@ export default async function MatchesPage() {
 
       {matches.length === 0 ? (
         <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl py-14 text-center shadow-lg">
-          <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-red-500/10 text-red-600 dark:text-red-500">
+          <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-vanguard-volt/10 text-vanguard-volt">
             <CalendarRange className="h-8 w-8" strokeWidth={1.75} />
           </div>
           <p className="text-zinc-500 dark:text-zinc-400">No matches scheduled yet.</p>
@@ -47,7 +47,7 @@ export default async function MatchesPage() {
                 <div className="text-sm font-bold text-zinc-900 dark:text-white truncate">
                   {m.home_team?.short_name} vs {m.away_team?.short_name}
                   {(m.status === "live" || m.status === "halftime" || m.status === "finished") && (
-                    <span className="ml-2 font-black text-red-600 dark:text-red-500 tabular-nums">
+                    <span className="ml-2 font-black text-vanguard-volt dark:text-vanguard-volt tabular-nums">
                       {m.home_score}–{m.away_score}
                     </span>
                   )}
@@ -64,7 +64,7 @@ export default async function MatchesPage() {
                   View
                 </Link>
                 {(m.status === "scheduled" || m.status === "live" || m.status === "halftime") && (
-                  <Link href={`/scorer/${m.id}`} className="text-xs font-semibold text-red-600 dark:text-red-500 hover:underline">
+                  <Link href={`/scorer/${m.id}`} className="text-xs font-semibold text-vanguard-volt dark:text-vanguard-volt hover:underline">
                     Score
                   </Link>
                 )}

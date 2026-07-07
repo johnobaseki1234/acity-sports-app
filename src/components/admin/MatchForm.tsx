@@ -113,7 +113,7 @@ export function MatchForm({
         </div>
       </div>
 
-      {error && <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</div>}
+      {error && <div className="text-sm text-vanguard-crimson bg-vanguard-crimson/10 rounded-lg px-3 py-2">{error}</div>}
 
       <div className="flex gap-3 pt-2">
         <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">

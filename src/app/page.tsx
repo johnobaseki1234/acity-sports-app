@@ -103,10 +103,10 @@ export default async function HomePage({
 function SectionHeader({ Icon, label, count }: { Icon: LucideIcon; label: string; count?: number }) {
   return (
     <div className="flex items-center gap-2 mb-3.5 px-0.5">
-      <Icon className="h-5 w-5 text-red-600 dark:text-red-500" strokeWidth={2.25} />
+      <Icon className="h-5 w-5 text-vanguard-volt" strokeWidth={2.25} />
       <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{label}</h2>
       {count !== undefined && (
-        <span className="rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 text-xs font-bold px-2 py-0.5">
+        <span className="rounded-full bg-vanguard-volt/10 dark:bg-vanguard-volt/20 text-vanguard-volt dark:text-vanguard-volt text-xs font-bold px-2 py-0.5">
           {count}
         </span>
       )}

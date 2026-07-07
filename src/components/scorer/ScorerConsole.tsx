@@ -340,7 +340,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
   const otherEventTypes = sportEventTypes.filter((e) => !e.affects_score && !systemEventTypes.includes(e.type) && !e.type.startsWith("missed_"));
 
   return (
-    <div className="min-h-screen bg-gray-900 flex flex-col">
+    <div className="min-h-screen bg-vanguard-charcoal flex flex-col">
       {/* Header */}
       <div className="bg-gray-800 px-4 py-3 flex items-center justify-between">
         <button onClick={() => router.push("/admin")} className="inline-flex items-center gap-1 text-gray-400 hover:text-white text-sm">
@@ -376,8 +376,8 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
             )}
             <div className="text-xs text-center mt-1">
               {match.status === "live" && (
-                <span className="text-red-400 font-bold flex items-center justify-center gap-1">
-                  <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse inline-block" />
+                <span className="text-vanguard-volt font-bold flex items-center justify-center gap-1">
+                  <span className="w-2 h-2 bg-vanguard-volt rounded-full animate-pulse inline-block" />
                   LIVE · {periodLabel()}
                 </span>
               )}
@@ -405,7 +405,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
         {/* Game controls */}
         <div className="flex justify-center gap-3 mt-4">
           {match.status === "scheduled" && (
-            <button onClick={startMatch} disabled={saving} className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-2.5 rounded-xl disabled:opacity-50">
+            <button onClick={startMatch} disabled={saving} className="inline-flex items-center gap-2 bg-vanguard-volt hover:bg-vanguard-volt/90 text-black font-bold px-6 py-2.5 rounded-xl disabled:opacity-50">
               <Play className="h-4 w-4" /> Start Match
             </button>
           )}
@@ -436,7 +436,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
                 <Play className="h-4 w-4" /> Start {nextPeriodLabel} (Tied)
               </button>
             ) : (
-              <button onClick={startNextPeriod} disabled={saving} className="inline-flex items-center gap-2 bg-red-600 hover:bg-red-500 text-white font-bold px-6 py-2.5 rounded-xl disabled:opacity-50">
+              <button onClick={startNextPeriod} disabled={saving} className="inline-flex items-center gap-2 bg-vanguard-volt hover:bg-vanguard-volt/90 text-black font-bold px-6 py-2.5 rounded-xl disabled:opacity-50">
                 <Play className="h-4 w-4" /> Start {nextPeriodLabel}
               </button>
             )
@@ -464,7 +464,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
 
           {/* Basketball Stage-2 Action Resolution Drawer Overlay */}
           {basketballIntent && (
-            <div className="bg-gray-800 border-2 border-red-500/50 rounded-2xl p-4 text-center animate-in fade-in zoom-in-95 duration-150">
+            <div className="bg-gray-800 border-2 border-vanguard-crimson/50 rounded-2xl p-4 text-center animate-in fade-in zoom-in-95 duration-150">
               <p className="text-sm text-gray-300 font-semibold uppercase tracking-wider mb-3">
                 Resolve Shot: {basketballIntent.eventType.label} ({basketballIntent.side === "home" ? match.home_team?.short_name : match.away_team?.short_name})
               </p>
@@ -477,7 +477,7 @@ export function ScorerConsole({ match: initialMatch, sport, homePlayers, awayPla
                 </button>
                 <button
                   onClick={() => handleBasketballOutcome(false)}
-                  className="bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-xl inline-flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"
+                  className="bg-vanguard-crimson hover:bg-vanguard-crimson/90 text-white font-bold py-3 px-4 rounded-xl inline-flex items-center justify-center gap-2 shadow-lg active:scale-95 transition-transform"
                 >
                   <X className="h-5 w-5" /> MISSED
                 </button>

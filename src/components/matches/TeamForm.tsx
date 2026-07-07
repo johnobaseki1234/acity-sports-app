@@ -67,7 +67,7 @@ export default function TeamForm({ teamId }: Props) {
   const colorMap: Record<MatchResult, string> = {
     W: "bg-emerald-500 text-white shadow-md shadow-emerald-500/20 font-black",
     D: "bg-amber-500 text-zinc-950 font-bold",
-    L: "bg-red-600 text-white shadow-md shadow-red-600/20 font-black",
+    L: "bg-vanguard-crimson text-white shadow-md shadow-vanguard-crimson/20 font-black",
   };
 
   return (

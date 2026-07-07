@@ -25,7 +25,7 @@ export function AdminNav() {
               href={href}
               className={`shrink-0 inline-flex items-center gap-2 px-3.5 py-2 rounded-xl text-sm font-semibold transition-all duration-300 ${
                 isActive
-                  ? "bg-red-600 text-white shadow-md shadow-red-600/25"
+                  ? "bg-vanguard-volt text-black shadow-md shadow-vanguard-volt/25"
                   : "text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5"
               }`}
             >

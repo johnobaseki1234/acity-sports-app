@@ -36,7 +36,7 @@ export function PlayerStatsTabs({ blocks }: { blocks: SportStatBlock[] }) {
               onClick={() => setActive(i)}
               className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition ${
                 i === active
-                  ? "bg-red-600 text-white"
+                  ? "bg-vanguard-volt text-black"
                   : "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 hover:bg-zinc-200 dark:hover:bg-zinc-700"
               }`}
             >
@@ -47,7 +47,7 @@ export function PlayerStatsTabs({ blocks }: { blocks: SportStatBlock[] }) {
       )}
 
       <h2 className="flex items-center gap-2 text-xl font-bold text-zinc-800 dark:text-zinc-50 mb-1">
-        <SportIcon slug={block.sportSlug} className="h-5 w-5 text-red-600 dark:text-red-500" /> {block.sportName} Statistics
+        <SportIcon slug={block.sportSlug} className="h-5 w-5 text-vanguard-volt" /> {block.sportName} Statistics
       </h2>
       {block.teamName && (
         <p className="text-sm text-gray-400 dark:text-zinc-500 mb-4">{block.teamName}</p>
@@ -81,7 +81,7 @@ export function PlayerStatsTabs({ blocks }: { blocks: SportStatBlock[] }) {
                 className="p-3 border border-gray-100 dark:border-zinc-800 rounded-xl flex justify-between items-center bg-gray-50/50 dark:bg-zinc-800/40 text-sm"
               >
                 <div>
-                  <span className="font-semibold text-red-600 dark:text-red-400 capitalize mr-2">{event.label}</span>
+                  <span className="font-semibold text-vanguard-volt dark:text-vanguard-volt capitalize mr-2">{event.label}</span>
                   {event.minute != null && (
                     <span className="text-gray-400 dark:text-zinc-500 font-mono text-xs">Minute {event.minute}</span>
                   )}

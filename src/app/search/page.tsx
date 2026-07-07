@@ -145,13 +145,13 @@ export default function SearchPage() {
           onChange={(e) => setQuery(e.target.value)}
           autoFocus
           placeholder="Search teams, players, or venues…"
-          className="w-full h-14 pl-12 pr-12 rounded-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 shadow-lg focus:ring-2 focus:ring-red-500 focus:border-transparent outline-none transition-all duration-300 text-zinc-800 dark:text-zinc-100 font-medium"
+          className="w-full h-14 pl-12 pr-12 rounded-2xl bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 shadow-lg focus:ring-2 focus:ring-vanguard-volt focus:border-transparent outline-none transition-all duration-300 text-zinc-800 dark:text-zinc-100 font-medium"
         />
-        {loading && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-red-600 animate-spin" />}
+        {loading && <Loader2 className="absolute right-4 top-1/2 -translate-y-1/2 h-5 w-5 text-vanguard-volt animate-spin" />}
       </div>
 
       {error && (
-        <div className="text-sm text-red-700 dark:text-red-300 bg-red-100 dark:bg-red-500/20 rounded-2xl px-4 py-3">{error}</div>
+        <div className="text-sm text-vanguard-crimson bg-vanguard-crimson/10 rounded-2xl px-4 py-3">{error}</div>
       )}
 
       {query.trim().length < 2 ? (
@@ -164,7 +164,7 @@ export default function SearchPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {results.teams.map((team) => (
                 <Link key={team.id} href={`/team/${team.slug}`} className="score-card flex items-center gap-3">
-                  <span className="grid place-items-center h-10 w-10 rounded-2xl bg-red-600 text-white text-[11px] font-black shrink-0">
+                  <span className="grid place-items-center h-10 w-10 rounded-2xl bg-vanguard-volt text-black text-[11px] font-black shrink-0">
                     {team.short_name?.slice(0, 3).toUpperCase()}
                   </span>
                   <span className="min-w-0">
@@ -232,9 +232,9 @@ function ResultSection({
   return (
     <section>
       <div className="flex items-center gap-2 mb-3 px-0.5">
-        <Icon className="h-5 w-5 text-red-600 dark:text-red-500" strokeWidth={2.25} />
+        <Icon className="h-5 w-5 text-vanguard-volt" strokeWidth={2.25} />
         <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{title}</h2>
-        <span className="rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 text-xs font-bold px-2 py-0.5">{count}</span>
+        <span className="rounded-full bg-vanguard-volt/10 dark:bg-vanguard-volt/20 text-vanguard-volt dark:text-vanguard-volt text-xs font-bold px-2 py-0.5">{count}</span>
       </div>
       {children}
     </section>

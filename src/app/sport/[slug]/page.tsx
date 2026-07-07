@@ -49,7 +49,7 @@ export default async function SportPage({ params }: { params: Promise<{ slug: st
   return (
     <div className="space-y-6">
       <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight pt-1 text-zinc-900 dark:text-white">
-        <SportIcon slug={slug} className="h-8 w-8 text-red-600 dark:text-red-500" />
+        <SportIcon slug={slug} className="h-8 w-8 text-vanguard-volt" />
         {meta.label}
       </h1>
 
@@ -78,7 +78,7 @@ export default async function SportPage({ params }: { params: Promise<{ slug: st
 
       {matches.length === 0 && (
         <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl py-16 text-center shadow-lg">
-          <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-red-500/10 text-red-600 dark:text-red-500">
+          <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-vanguard-volt/10 text-vanguard-volt">
             <SportIcon slug={slug} className="h-8 w-8" />
           </div>
           <p className="font-medium text-zinc-500 dark:text-zinc-400">No matches scheduled</p>

@@ -8,13 +8,13 @@ import BottomNav from "../components/layout/BottomNav";
 import ServiceWorkerRegister from "../components/pwa/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
-  title: "Acity Sports Center",
-  description: "Live real-time operational tournament event matches portal",
+  title: "VANGUARD",
+  description: "The Collegiate Sports Operating Ecosystem — live scores, fixtures and standings.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "Acity Sports",
+    title: "VANGUARD",
   },
   icons: {
     icon: "/icon-192x192.png",
@@ -35,20 +35,20 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="relative min-h-screen text-zinc-900 dark:text-zinc-100 antialiased bg-gradient-to-br from-zinc-50 via-white to-red-50 dark:from-black dark:via-zinc-950 dark:to-zinc-900 transition-colors duration-300">
+      <body className="relative min-h-screen text-zinc-900 dark:text-zinc-100 antialiased bg-gradient-to-br from-zinc-50 via-white to-zinc-50 dark:bg-vanguard-charcoal transition-colors duration-300">
         {/* Decorative background layer */}
         <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
           <div className="absolute inset-0 bg-grid opacity-60" />
           <div
-            className="absolute -top-32 -right-24 h-96 w-96 rounded-full bg-red-500/15 dark:bg-red-700/15 blur-3xl"
+            className="absolute -top-32 -right-24 h-96 w-96 rounded-full bg-vanguard-volt/10 dark:bg-vanguard-volt/10 blur-3xl"
             style={{ animation: "floatBlob 14s ease-in-out infinite" }}
           />
           <div
-            className="absolute top-1/3 -left-24 h-96 w-96 rounded-full bg-red-400/10 dark:bg-red-800/12 blur-3xl"
+            className="absolute top-1/3 -left-24 h-96 w-96 rounded-full bg-vanguard-crimson/10 dark:bg-vanguard-crimson/12 blur-3xl"
             style={{ animation: "floatBlob 18s ease-in-out infinite reverse" }}
           />
           <div
-            className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-rose-400/10 dark:bg-red-900/12 blur-3xl"
+            className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-vanguard-volt/5 dark:bg-vanguard-crimson/12 blur-3xl"
             style={{ animation: "floatBlob 20s ease-in-out infinite" }}
           />
         </div>

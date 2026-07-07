@@ -21,7 +21,7 @@ export default async function PlayersPage() {
 
       {players.length === 0 ? (
         <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl py-14 text-center shadow-lg">
-          <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-red-500/10 text-red-600 dark:text-red-500">
+          <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-3xl bg-vanguard-volt/10 text-vanguard-volt">
             <UserRound className="h-8 w-8" strokeWidth={1.75} />
           </div>
           <p className="text-zinc-500 dark:text-zinc-400">No players yet. Add players to teams.</p>
@@ -40,7 +40,7 @@ export default async function PlayersPage() {
                 <div className="font-bold text-sm text-zinc-900 dark:text-white truncate">{p.name}</div>
                 <div className="text-xs text-zinc-400 truncate">{p.position} · {p.team?.name}</div>
               </div>
-              <Link href={`/admin/players/${p.id}`} className="text-sm font-semibold text-red-600 dark:text-red-500 hover:underline shrink-0">
+              <Link href={`/admin/players/${p.id}`} className="text-sm font-semibold text-vanguard-volt dark:text-vanguard-volt hover:underline shrink-0">
                 Edit
               </Link>
             </div>

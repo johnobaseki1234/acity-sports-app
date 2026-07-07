@@ -13,7 +13,7 @@ export function ErrorState({
 }) {
   return (
     <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border border-zinc-200 dark:border-zinc-800 rounded-3xl px-6 py-14 text-center max-w-md mx-auto shadow-lg">
-      <div className="mx-auto mb-4 grid place-items-center h-20 w-20 rounded-3xl bg-gradient-to-br from-red-500/15 to-red-700/15 text-red-600 dark:text-red-500">
+      <div className="mx-auto mb-4 grid place-items-center h-20 w-20 rounded-3xl bg-vanguard-crimson/15 text-vanguard-crimson">
         <AlertTriangle className="h-9 w-9" strokeWidth={1.75} />
       </div>
       <p className="font-bold text-zinc-800 dark:text-zinc-100">{title}</p>
@@ -21,7 +21,7 @@ export function ErrorState({
       {onRetry && (
         <button
           onClick={onRetry}
-          className="mt-5 inline-flex items-center gap-2 h-12 rounded-2xl bg-red-600 hover:bg-red-700 text-white font-semibold text-sm px-5 shadow-lg shadow-red-600/20 transition-all duration-300 active:scale-95"
+          className="mt-5 inline-flex items-center gap-2 h-12 rounded-2xl bg-vanguard-crimson hover:bg-vanguard-crimson/90 text-white font-semibold text-sm px-5 shadow-lg shadow-vanguard-crimson/20 transition-all duration-300 active:scale-95"
         >
           <RotateCw className="h-4 w-4" /> Try again
         </button>

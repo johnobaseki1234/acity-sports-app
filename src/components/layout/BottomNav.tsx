@@ -14,7 +14,13 @@ const ITEMS: { label: string; Icon: LucideIcon; href: string; match: (p: string)
 
 export default function BottomNav() {
   const pathname = usePathname();
-  if (pathname.startsWith("/admin") || pathname.startsWith("/scorer")) return null;
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/scorer") ||
+    pathname.startsWith("/stealth") ||
+    pathname.startsWith("/login")
+  )
+    return null;
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 pb-safe">
@@ -30,18 +36,18 @@ export default function BottomNav() {
                 aria-current={active ? "page" : undefined}
                 className="relative flex flex-col items-center justify-center gap-1 min-h-[56px] py-2 transition active:scale-95"
               >
-                {active && <span className="absolute top-1.5 h-1 w-8 rounded-full bg-red-600 transition-all" />}
+                {active && <span className="absolute top-1.5 h-1 w-8 rounded-full bg-vanguard-volt transition-all" />}
                 <Icon
                   className={`h-[22px] w-[22px] transition-all ${
                     active
-                      ? "text-red-600 dark:text-red-500 scale-110"
+                      ? "text-vanguard-volt scale-110"
                       : "text-zinc-400 dark:text-zinc-500"
                   }`}
                   strokeWidth={active ? 2.5 : 2}
                 />
                 <span
                   className={`text-[10px] font-semibold ${
-                    active ? "text-red-600 dark:text-red-500" : "text-zinc-400 dark:text-zinc-500"
+                    active ? "text-vanguard-volt" : "text-zinc-400 dark:text-zinc-500"
                   }`}
                 >
                   {label}

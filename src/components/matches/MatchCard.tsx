@@ -16,8 +16,8 @@ export function MatchCard({ match }: Props) {
       href={`/match/${match.id}`}
       className={`group relative block bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl border rounded-3xl p-4 sm:p-5 shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl ${
         isLive
-          ? "border-red-500/40 live-glow"
-          : "border-zinc-200 dark:border-zinc-800 hover:border-red-300/60"
+          ? "border-vanguard-volt/40 live-glow"
+          : "border-zinc-200 dark:border-zinc-800 hover:border-vanguard-volt/40"
       }`}
     >
       {/* Team-colour accent bar */}
@@ -44,7 +44,7 @@ export function MatchCard({ match }: Props) {
           {showScore ? (
             <div
               className={`text-4xl sm:text-5xl font-black tracking-tight tabular-nums leading-none ${
-                isLive ? "text-red-600 dark:text-red-500" : "text-zinc-900 dark:text-white"
+                isLive ? "text-vanguard-volt dark:text-vanguard-volt" : "text-zinc-900 dark:text-white"
               }`}
             >
               {match.home_score}
@@ -93,8 +93,8 @@ function StatusBadge({ match }: { match: Match }) {
   if (match.status === "live") {
     const isOT = sportSlug === "basketball" && match.current_period > 4;
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full bg-red-100 dark:bg-red-500/20 text-red-700 dark:text-red-300 text-[11px] font-bold px-2.5 py-1 animate-pulse">
-        <span className="h-1.5 w-1.5 rounded-full bg-red-600 dark:bg-red-400" />
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-vanguard-volt/10 dark:bg-vanguard-volt/20 text-vanguard-volt dark:text-vanguard-volt text-[11px] font-bold px-2.5 py-1 animate-pulse">
+        <span className="h-1.5 w-1.5 rounded-full bg-vanguard-volt dark:bg-vanguard-volt" />
         LIVE{isOT ? ` · OT${match.current_period - 4}` : ""}
       </span>
     );

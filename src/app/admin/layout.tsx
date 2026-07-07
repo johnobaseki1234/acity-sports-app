@@ -8,14 +8,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <header className="sticky top-0 z-40 glass-strong border-x-0 border-t-0">
         <div className="max-w-5xl mx-auto px-4 sm:px-5 flex items-center justify-between h-16">
           <Link href="/" className="flex items-center gap-2.5 group">
-            <span className="grid place-items-center h-10 w-10 rounded-2xl bg-gradient-to-br from-red-600 to-red-800 text-white shadow-lg shadow-red-600/25 transition-transform group-active:scale-95">
+            <span className="grid place-items-center h-10 w-10 rounded-2xl bg-vanguard-volt text-black shadow-lg shadow-vanguard-volt/25 transition-transform group-active:scale-95">
               <Trophy className="h-5 w-5" strokeWidth={2.25} />
             </span>
             <span className="leading-tight">
               <span className="block font-extrabold tracking-tight text-[15px] text-zinc-900 dark:text-white">
-                ACITY <span className="text-red-600 dark:text-red-500">SPORTS</span>
+                ACITY <span className="text-vanguard-volt">SPORTS</span>
               </span>
-              <span className="block text-[10px] font-bold uppercase tracking-wider text-red-600 dark:text-red-500">
+              <span className="block text-[10px] font-bold uppercase tracking-wider text-vanguard-volt">
                 Admin Console
               </span>
             </span>

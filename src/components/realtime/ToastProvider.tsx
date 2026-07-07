@@ -51,7 +51,7 @@ export default function ToastProvider({ children }: { children: React.ReactNode 
 function ToastCard({ toast, onDismiss }: { toast: ToastItem; onDismiss: () => void }) {
   const inner = (
     <div className="flex items-start gap-3 rounded-2xl border border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-900/90 backdrop-blur-xl shadow-xl px-4 py-3 animate-[slideIn_0.2s_ease-out]">
-      <span className="grid place-items-center h-9 w-9 shrink-0 rounded-xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
+      <span className="grid place-items-center h-9 w-9 shrink-0 rounded-xl bg-vanguard-volt/10 dark:bg-vanguard-volt/20 text-vanguard-volt dark:text-vanguard-volt">
         <EventIcon type={toast.eventType ?? ""} className="h-4 w-4" />
       </span>
       <div className="min-w-0 flex-1">

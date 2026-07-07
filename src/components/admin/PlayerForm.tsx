@@ -159,7 +159,7 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
           <input type="checkbox" checked={form.is_active} onChange={(e) => set("is_active", e.target.checked)} className="w-4 h-4 rounded" />
           <span className="text-sm font-medium text-gray-700">Active player</span>
         </label>
-        {error && <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</div>}
+        {error && <div className="text-sm text-vanguard-crimson bg-vanguard-crimson/10 rounded-lg px-3 py-2">{error}</div>}
         <div className="flex gap-3 pt-2">
           <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
             {saving ? "Saving..." : "Save Changes"}
@@ -197,9 +197,9 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
                 key={s.id}
                 type="button"
                 onClick={() => { setSelectedSport(s.slug); setForm((f) => ({ ...f, team_id: "" })); setStep(2); }}
-                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-all text-left"
+                className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-vanguard-volt hover:bg-vanguard-volt/10 dark:hover:bg-vanguard-volt/10 transition-all text-left"
               >
-                <span className="grid place-items-center h-12 w-12 rounded-2xl bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400">
+                <span className="grid place-items-center h-12 w-12 rounded-2xl bg-vanguard-volt/10 dark:bg-vanguard-volt/20 text-vanguard-volt dark:text-vanguard-volt">
                   <SportIcon slug={s.slug} className="h-6 w-6" />
                 </span>
                 <div>
@@ -274,7 +274,7 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
               <input className="input" list="positions-create-sec" value={form.secondary_position} onChange={(e) => set("secondary_position", e.target.value)} placeholder="e.g. SG" />
               <datalist id="positions-create-sec">{positions.map((p) => <option key={p} value={p} />)}</datalist>
             </div>
-            {error && <div className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{error}</div>}
+            {error && <div className="text-sm text-vanguard-crimson bg-vanguard-crimson/10 rounded-lg px-3 py-2">{error}</div>}
             <div className="flex gap-3 pt-2">
               <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
                 {saving ? "Saving..." : "Add Player"}

@@ -114,7 +114,7 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
             <ul className="divide-y divide-gray-50 dark:divide-zinc-800">
               {activeRoster.map((player) => (
                 <li key={player.id} className="py-3 flex items-center justify-between gap-3">
-                  <Link href={`/player/${player.id}`} className="hover:text-red-600 dark:hover:text-red-400 transition min-w-0">
+                  <Link href={`/player/${player.id}`} className="hover:text-vanguard-volt dark:hover:text-vanguard-volt transition min-w-0">
                     <span className="font-mono text-gray-400 mr-2">#{player.jersey_number}</span>
                     <span className="font-medium text-gray-700 dark:text-zinc-200">{player.name}</span>
                   </Link>
@@ -137,11 +137,11 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
             ) : (
               <div className="space-y-3">
                 {fixtures.map((match) => (
-                  <Link key={match.id} href={`/match/${match.id}`} className="p-4 border rounded-xl flex justify-between items-center gap-4 bg-gray-50/50 hover:border-red-300 transition">
+                  <Link key={match.id} href={`/match/${match.id}`} className="p-4 border rounded-xl flex justify-between items-center gap-4 bg-gray-50/50 hover:border-vanguard-volt transition">
                     <span className="text-sm font-medium text-gray-600">{match.home_team?.name} vs {match.away_team?.name}</span>
                     <span className="text-right text-xs text-gray-500 shrink-0">
                       {new Date(match.scheduled_at).toLocaleDateString()}<br />
-                      <span className="font-semibold capitalize text-red-700">{match.status}</span>
+                      <span className="font-semibold capitalize text-vanguard-volt">{match.status}</span>
                     </span>
                   </Link>
                 ))}
@@ -156,11 +156,11 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
             ) : (
               <div className="space-y-3">
                 {results.map((match) => (
-                  <Link key={match.id} href={`/match/${match.id}`} className="p-4 border rounded-xl flex justify-between items-center gap-4 hover:border-red-300 transition">
+                  <Link key={match.id} href={`/match/${match.id}`} className="p-4 border rounded-xl flex justify-between items-center gap-4 hover:border-vanguard-volt transition">
                     <span className="text-sm text-gray-700">
-                      <strong className={match.home_team_id === team.id ? "text-red-600" : ""}>{match.home_team?.short_name}</strong>
+                      <strong className={match.home_team_id === team.id ? "text-vanguard-volt" : ""}>{match.home_team?.short_name}</strong>
                       {" "}{match.home_score} - {match.away_score}{" "}
-                      <strong className={match.away_team_id === team.id ? "text-red-600" : ""}>{match.away_team?.short_name}</strong>
+                      <strong className={match.away_team_id === team.id ? "text-vanguard-volt" : ""}>{match.away_team?.short_name}</strong>
                     </span>
                     <span className="text-xs text-gray-400 shrink-0">{new Date(match.scheduled_at).toLocaleDateString()}</span>
                   </Link>
@@ -175,7 +175,7 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
       {(alumni.length > 0 || retired.length > 0) && (
         <div className="mt-10">
           <div className="flex items-center gap-2.5 mb-5">
-            <Award className="h-7 w-7 text-red-600 dark:text-red-500" strokeWidth={2} />
+            <Award className="h-7 w-7 text-vanguard-volt" strokeWidth={2} />
             <h2 className="text-2xl font-bold text-zinc-800 dark:text-zinc-50">Hall of Fame &amp; Archive</h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
