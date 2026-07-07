@@ -5,6 +5,7 @@ import ToastProvider from "../components/realtime/ToastProvider";
 import { LiveTicker } from "../components/realtime/LiveTicker";
 import Header from "../components/layout/Header";
 import BottomNav from "../components/layout/BottomNav";
+import { OnboardingGate } from "../components/layout/OnboardingGate";
 import ServiceWorkerRegister from "../components/pwa/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
@@ -38,6 +39,7 @@ export default function RootLayout({
       <body className="relative min-h-screen bg-vanguard-charcoal text-zinc-100 antialiased">
         <Providers>
           <ToastProvider>
+            <OnboardingGate />
             <Header />
             <LiveTicker />
             <main className="max-w-5xl mx-auto px-4 sm:px-5 pt-5 pb-28 md:pb-16">{children}</main>

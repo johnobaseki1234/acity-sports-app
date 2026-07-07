@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Shield, UserRound, CalendarRange, Swords, type LucideIcon } from "lucide-react";
+import { LayoutDashboard, Shield, UserRound, CalendarRange, Swords, Network, type LucideIcon } from "lucide-react";
 
 const NAV: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: "/admin", label: "Dashboard", Icon: LayoutDashboard },
@@ -10,6 +10,7 @@ const NAV: { href: string; label: string; Icon: LucideIcon }[] = [
   { href: "/admin/players", label: "Players", Icon: UserRound },
   { href: "/admin/seasons", label: "Seasons", Icon: CalendarRange },
   { href: "/admin/matches", label: "Matches", Icon: Swords },
+  { href: "/admin/network", label: "Network", Icon: Network },
 ];
 
 export function AdminNav() {

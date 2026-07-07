@@ -48,7 +48,8 @@ export function LiveTicker() {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/scorer") ||
     pathname.startsWith("/stealth") ||
-    pathname.startsWith("/login");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/onboarding");
 
   const [matches, setMatches] = useState<LiveMatch[]>([]);
   const { showToast } = useToast();

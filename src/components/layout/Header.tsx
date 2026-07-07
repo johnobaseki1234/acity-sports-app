@@ -20,7 +20,8 @@ export default function Header() {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/scorer") ||
     pathname.startsWith("/stealth") ||
-    pathname.startsWith("/login")
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/onboarding")
   )
     return null;
 

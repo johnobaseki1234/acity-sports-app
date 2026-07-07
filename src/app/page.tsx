@@ -1,10 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { Hero } from "@/components/home/Hero";
-import { SportFilters } from "@/components/home/SportFilters";
+import { LeagueTags } from "@/components/home/LeagueTags";
 import { LeagueFeed } from "@/components/home/LeagueFeed";
 import { Reveal } from "@/components/motion/Motion";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatMatchDate } from "@/lib/utils/match";
+import { getActiveSeasons } from "@/lib/utils/leagues";
 import type { Match } from "@/lib/supabase/types";
 import { CalendarX } from "lucide-react";
 
@@ -43,15 +44,17 @@ async function getMatches() {
 export default async function HomePage({
   searchParams,
 }: {
-  searchParams: Promise<{ sport?: string }>;
+  searchParams: Promise<{ league?: string }>;
 }) {
-  const [matches, { sport: selectedSport }] = await Promise.all([
+  const supabase = await createClient();
+  const [matches, { league: activeLeague }, seasons] = await Promise.all([
     getMatches(),
     searchParams,
+    getActiveSeasons(supabase),
   ]);
 
-  const filtered = selectedSport
-    ? matches.filter((m) => (m.season as any)?.sport?.slug === selectedSport)
+  const filtered = activeLeague
+    ? matches.filter((m) => (m.season as any)?.id === activeLeague)
     : matches;
 
   const live = filtered.filter((m) => m.status === "live" || m.status === "halftime");
@@ -66,7 +69,7 @@ export default async function HomePage({
       </Reveal>
 
       <Reveal delay={0.05}>
-        <SportFilters activeSport={selectedSport} />
+        <LeagueTags mode="filter" seasons={seasons} basePath="/" activeSeasonId={activeLeague} />
       </Reveal>
 
       {/* FlashScore-style league feed — realtime, grouped by tournament */}

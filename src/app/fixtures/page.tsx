@@ -2,7 +2,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatMatchDate, formatMatchTime, getStatusLabel } from "@/lib/utils/match";
 import { SportIcon } from "@/components/ui/SportIcon";
-import { Sparkles, LayoutGrid } from "lucide-react";
+import { LayoutGrid } from "lucide-react";
+import { LeagueTags } from "@/components/home/LeagueTags";
+import { getActiveSeasons } from "@/lib/utils/leagues";
 import type { Match } from "@/lib/supabase/types";
 
 const MATCH_SELECT = `
@@ -12,37 +14,39 @@ const MATCH_SELECT = `
   season:seasons(*, sport:sports(*))
 `;
 
-const SPORT_SWITCHER = [
-  { label: "All",        slug: null,         href: "/fixtures" },
-  { label: "Football",   slug: "football",   href: "/fixtures/football" },
-  { label: "Basketball", slug: "basketball", href: "/fixtures/basketball" },
-  { label: "Volleyball", slug: "volleyball", href: "/fixtures/volleyball" },
-] as const;
+function statusHref(status: string, league?: string) {
+  const params = new URLSearchParams();
+  if (status !== "all") params.set("status", status);
+  if (league) params.set("league", league);
+  const qs = params.toString();
+  return `/fixtures${qs ? `?${qs}` : ""}`;
+}
 
 const STATUS_FILTERS = [
-  { label: "All",      value: "all",       href: "/fixtures" },
-  { label: "Upcoming", value: "scheduled", href: "/fixtures?status=scheduled" },
-  { label: "Live",     value: "live",      href: "/fixtures?status=live" },
-  { label: "Results",  value: "finished",  href: "/fixtures?status=finished" },
+  { label: "All",      value: "all" },
+  { label: "Upcoming", value: "scheduled" },
+  { label: "Live",     value: "live" },
+  { label: "Results",  value: "finished" },
 ] as const;
 
 export default async function AllFixturesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; league?: string }>;
 }) {
-  const { status: rawStatus } = await searchParams;
+  const { status: rawStatus, league: activeLeague } = await searchParams;
   const selectedStatus = rawStatus ?? "all";
 
   const supabase = await createClient();
-  const { data } = await supabase
-    .from("matches")
-    .select(MATCH_SELECT)
-    .order("scheduled_at", { ascending: true });
+  const [{ data }, seasons] = await Promise.all([
+    supabase.from("matches").select(MATCH_SELECT).order("scheduled_at", { ascending: true }),
+    getActiveSeasons(supabase),
+  ]);
 
   const allMatches = (data ?? []) as Match[];
 
   const filtered = allMatches.filter((m) => {
+    if (activeLeague && (m.season as any)?.id !== activeLeague) return false;
     if (selectedStatus === "all") return true;
     if (selectedStatus === "live") return m.status === "live" || m.status === "halftime";
     return m.status === selectedStatus;
@@ -56,29 +60,24 @@ export default async function AllFixturesPage({
 
   return (
     <div className="space-y-5">
-      {/* Header + Sport Switcher (Tier 1) */}
+      {/* Header + League Tags (Tier 1) */}
       <div className="space-y-3">
-        <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
+        <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight text-white">
           <LayoutGrid className="h-8 w-8 text-vanguard-volt" />
           Fixtures
         </h1>
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-          {SPORT_SWITCHER.map(({ label, slug, href }) => (
-            <SportSwitcherPill
-              key={label}
-              label={label}
-              slug={slug ?? undefined}
-              href={href}
-              active={slug === null}
-            />
-          ))}
-        </div>
+        <LeagueTags mode="filter" seasons={seasons} basePath="/fixtures" activeSeasonId={activeLeague} />
       </div>
 
       {/* Status Pills (Tier 2) */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-        {STATUS_FILTERS.map(({ label, value, href }) => (
-          <FilterLink key={value} label={label} href={href} active={selectedStatus === value} />
+        {STATUS_FILTERS.map(({ label, value }) => (
+          <FilterLink
+            key={value}
+            label={label}
+            href={statusHref(value, activeLeague)}
+            active={selectedStatus === value}
+          />
         ))}
       </div>
 
@@ -135,36 +134,6 @@ function FixtureRow({ match, showSportBadge }: { match: Match; showSportBadge?: 
       {match.matchday && (
         <div className="mt-2 text-center text-xs text-gray-400">Matchday {match.matchday}</div>
       )}
-    </Link>
-  );
-}
-
-function SportSwitcherPill({
-  label,
-  slug,
-  href,
-  active,
-}: {
-  label: string;
-  slug?: string;
-  href: string;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 ${
-        active
-          ? "bg-vanguard-volt text-black shadow-md shadow-vanguard-volt/25"
-          : "bg-white/70 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800"
-      }`}
-    >
-      {slug ? (
-        <SportIcon slug={slug} className="h-4 w-4" strokeWidth={2.25} />
-      ) : (
-        <Sparkles className="h-4 w-4" strokeWidth={2.25} />
-      )}
-      {label}
     </Link>
   );
 }
