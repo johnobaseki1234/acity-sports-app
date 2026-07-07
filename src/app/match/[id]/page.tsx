@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { notFound } from "next/navigation";
 import { LiveMatchView } from "@/components/matches/LiveMatchView";
-import type { Match, MatchEvent, Sport } from "@/lib/supabase/types";
+import type { Match, MatchEvent, Player, Sport } from "@/lib/supabase/types";
 
 export default async function MatchPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -23,11 +23,19 @@ export default async function MatchPage({ params }: { params: Promise<{ id: stri
   if (!match) notFound();
   if (!match.season?.sport) notFound();
 
+  const { data: roster } = await supabase
+    .from("players")
+    .select("*")
+    .in("team_id", [match.home_team_id, match.away_team_id])
+    .eq("is_active", true)
+    .order("jersey_number", { ascending: true });
+
   return (
     <LiveMatchView
       match={match as Match}
       initialEvents={(events ?? []) as MatchEvent[]}
       sport={match.season.sport as Sport}
+      roster={(roster ?? []) as Player[]}
     />
   );
 }
