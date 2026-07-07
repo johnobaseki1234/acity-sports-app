@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Trophy, Bell } from "lucide-react";
-import ThemeToggle from "../ui/ThemeToggle";
 import { HeaderSearch } from "@/components/ui/HeaderSearch";
 
 const NAV = [
@@ -35,11 +34,11 @@ export default function Header() {
               <Trophy className="h-5 w-5" strokeWidth={2.25} />
             </span>
             <span className="leading-tight">
-              <span className="block font-extrabold tracking-tight text-[15px] text-zinc-900 dark:text-white">
-                ACITY <span className="text-vanguard-volt">SPORTS</span>
+              <span className="block font-extrabold tracking-tight text-[15px] text-white">
+                VAN<span className="text-vanguard-volt">GUARD</span>
               </span>
-              <span className="block text-[10px] font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500">
-                Live University Sports
+              <span className="block text-[10px] font-medium uppercase tracking-wider text-zinc-500">
+                The Collegiate Sports OS
               </span>
             </span>
           </Link>
@@ -68,9 +67,7 @@ export default function Header() {
           <div className="flex items-center gap-1.5 shrink-0">
             {/* Embedded Live Multi-Sport Stats Search Trigger Component */}
             <HeaderSearch />
-            
-            <ThemeToggle />
-            
+
             <button
               aria-label="Notifications"
               className="relative grid place-items-center h-10 w-10 rounded-xl text-zinc-600 dark:text-zinc-300 hover:bg-black/5 dark:hover:bg-white/5 transition active:scale-95"
@@ -81,9 +78,9 @@ export default function Header() {
             
             <button
               aria-label="Account"
-              className="grid place-items-center h-10 w-10 rounded-xl bg-gradient-to-br from-zinc-200 to-zinc-300 dark:from-zinc-700 dark:to-zinc-800 text-xs font-bold text-zinc-600 dark:text-zinc-200 transition active:scale-95"
+              className="grid place-items-center h-10 w-10 rounded-xl bg-zinc-800 border border-zinc-700 text-xs font-black text-vanguard-volt transition active:scale-95"
             >
-              AC
+              V
             </button>
           </div>
         </div>

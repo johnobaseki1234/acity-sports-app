@@ -55,7 +55,7 @@ export async function buildWhatsAppPayload(
   }
 
   const payload: NotificationPayload = {
-    leagueName: season?.name ?? "Acity Sports",
+    leagueName: season?.name ?? "VANGUARD",
     homeTeamName: home?.short_name ?? "HOME",
     awayTeamName: away?.short_name ?? "AWAY",
     homeScore: (match.home_score as number) ?? 0,

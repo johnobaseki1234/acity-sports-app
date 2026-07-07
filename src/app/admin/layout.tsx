@@ -13,7 +13,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             </span>
             <span className="leading-tight">
               <span className="block font-extrabold tracking-tight text-[15px] text-zinc-900 dark:text-white">
-                ACITY <span className="text-vanguard-volt">SPORTS</span>
+                VAN<span className="text-vanguard-volt">GUARD</span>
               </span>
               <span className="block text-[10px] font-bold uppercase tracking-wider text-vanguard-volt">
                 Admin Console

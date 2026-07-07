@@ -1,13 +1,13 @@
 {
-  "name": "Acity Sports Center",
-  "short_name": "Acity Sports",
-  "description": "Live scores, standings and real-time match updates for Academic City University College leagues.",
+  "name": "VANGUARD",
+  "short_name": "VANGUARD",
+  "description": "The Collegiate Sports Operating Ecosystem — live scores, fixtures and standings.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#ffffff",
-  "theme_color": "#1d4ed8",
+  "background_color": "#0D0E10",
+  "theme_color": "#0D0E10",
   "categories": ["sports"],
   "icons": [
     {

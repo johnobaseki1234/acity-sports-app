@@ -23,7 +23,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#1d4ed8",
+  themeColor: "#0D0E10",
   width: "device-width",
   initialScale: 1,
 };
@@ -35,24 +35,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="relative min-h-screen text-zinc-900 dark:text-zinc-100 antialiased bg-gradient-to-br from-zinc-50 via-white to-zinc-50 dark:bg-vanguard-charcoal transition-colors duration-300">
-        {/* Decorative background layer */}
-        <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-          <div className="absolute inset-0 bg-grid opacity-60" />
-          <div
-            className="absolute -top-32 -right-24 h-96 w-96 rounded-full bg-vanguard-volt/10 dark:bg-vanguard-volt/10 blur-3xl"
-            style={{ animation: "floatBlob 14s ease-in-out infinite" }}
-          />
-          <div
-            className="absolute top-1/3 -left-24 h-96 w-96 rounded-full bg-vanguard-crimson/10 dark:bg-vanguard-crimson/12 blur-3xl"
-            style={{ animation: "floatBlob 18s ease-in-out infinite reverse" }}
-          />
-          <div
-            className="absolute bottom-0 right-1/4 h-80 w-80 rounded-full bg-vanguard-volt/5 dark:bg-vanguard-crimson/12 blur-3xl"
-            style={{ animation: "floatBlob 20s ease-in-out infinite" }}
-          />
-        </div>
-
+      <body className="relative min-h-screen bg-vanguard-charcoal text-zinc-100 antialiased">
         <Providers>
           <ToastProvider>
             <Header />

@@ -21,7 +21,7 @@ export function formatWhatsAppMessage(
   const boundary = "-------------------------";
   const header = `🏆 *${p.leagueName}*`;
   const scoreLine = `${p.homeTeamName} *[${p.homeScore}]* - *[${p.awayScore}]* ${p.awayTeamName}`;
-  const footer = `\n_Sent live from the Acity Sports Center_`;
+  const footer = `\n_Sent live from VANGUARD_`;
 
   switch (sport) {
     case "football":

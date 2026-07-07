@@ -1,4 +1,4 @@
-const CACHE_NAME = "acity-v2";
+const CACHE_NAME = "vanguard-v1";
 
 const OFFLINE_FILES = [
   "/offline.html",

@@ -178,8 +178,8 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
           const done = step > n;
           const active = step === n;
           return (
-            <div key={n} className={`flex-1 flex items-center gap-2 px-4 py-3 text-sm font-medium ${active ? "text-brand-blue bg-blue-50" : done ? "text-green-600" : "text-gray-400"}`}>
-              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${active ? "bg-brand-blue text-white" : done ? "bg-green-100 text-green-700" : "bg-gray-100"}`}>
+            <div key={n} className={`flex-1 flex items-center gap-2 px-4 py-3 text-sm font-medium ${active ? "text-vanguard-volt bg-vanguard-volt/10" : done ? "text-green-500" : "text-zinc-500"}`}>
+              <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${active ? "bg-vanguard-volt text-black" : done ? "bg-green-500/15 text-green-500" : "bg-zinc-800"}`}>
                 {done ? "✓" : n}
               </span>
               {label}
@@ -218,14 +218,14 @@ export function PlayerForm({ player, teams, sports, teamSportMap }: Props) {
               <p className="font-semibold text-gray-700">Which team?</p>
             </div>
             {teamsForSport.length === 0 ? (
-              <p className="text-gray-400 text-sm">No teams added for this sport yet. <a href="/admin/teams/new" className="text-brand-blue underline">Add a team first.</a></p>
+              <p className="text-gray-400 text-sm">No teams added for this sport yet. <a href="/admin/teams/new" className="text-vanguard-volt underline">Add a team first.</a></p>
             ) : (
               teamsForSport.map((t) => (
                 <button
                   key={t.id}
                   type="button"
                   onClick={() => { set("team_id", t.id); setStep(3); }}
-                  className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-gray-100 hover:border-brand-blue hover:bg-blue-50 transition-all text-left"
+                  className="w-full flex items-center gap-4 p-4 rounded-xl border-2 border-zinc-100 dark:border-zinc-800 hover:border-vanguard-volt hover:bg-vanguard-volt/10 transition-all text-left"
                 >
                   <div className="w-10 h-10 rounded-full border-2 border-white shadow flex-shrink-0" style={{ background: t.primary_color }} />
                   <div>

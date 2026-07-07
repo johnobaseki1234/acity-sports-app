@@ -6,11 +6,6 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        brand: {
-          blue: "#1e3a5f",
-          red: "#c0392b",
-          gold: "#f39c12",
-        },
         vanguard: {
           charcoal: "#0D0E10",
           volt: "#CCFF00",
