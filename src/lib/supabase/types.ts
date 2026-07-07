@@ -22,6 +22,7 @@ export type EventTypeConfig = {
 export type Season = {
   id: string;
   sport_id: string;
+  school_id?: string | null;
   name: string;
   start_date: string;
   end_date: string;
@@ -33,6 +34,23 @@ export type Season = {
   };
   created_at: string;
   sport?: Sport;
+  school?: School;
+};
+
+export type School = {
+  id: string;
+  name: string;
+  short_name: string;
+  slug: string;
+  primary_color: string;
+  created_at: string;
+};
+
+export type UserPreferences = {
+  user_id: string;
+  favorite_season_ids: string[];
+  onboarding_completed: boolean;
+  updated_at: string;
 };
 
 export type Team = {
