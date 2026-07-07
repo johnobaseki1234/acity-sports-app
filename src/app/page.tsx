@@ -1,13 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
-import { MatchCard } from "@/components/matches/MatchCard";
-import { LiveScoreboard } from "@/components/matches/LiveScoreboard";
 import { Hero } from "@/components/home/Hero";
 import { SportFilters } from "@/components/home/SportFilters";
-import { Reveal, Stagger, StaggerItem } from "@/components/motion/Motion";
+import { LeagueFeed } from "@/components/home/LeagueFeed";
+import { Reveal } from "@/components/motion/Motion";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { formatMatchDate } from "@/lib/utils/match";
 import type { Match } from "@/lib/supabase/types";
-import { CalendarDays, History, CalendarX, type LucideIcon } from "lucide-react";
+import { CalendarX } from "lucide-react";
 
 const MATCH_SELECT = `
   *,
@@ -28,7 +27,17 @@ async function getMatches() {
     .lte("scheduled_at", threeDaysAhead)
     .order("scheduled_at", { ascending: true });
 
-  return (data ?? []) as Match[];
+  if (data && data.length > 0) return data as Match[];
+
+  // Quiet week: fall back to the latest results so the feed never renders empty.
+  const { data: recent } = await supabase
+    .from("matches")
+    .select(MATCH_SELECT)
+    .in("status", ["finished", "live", "halftime"])
+    .order("scheduled_at", { ascending: false })
+    .limit(12);
+
+  return (recent ?? []) as Match[];
 }
 
 export default async function HomePage({
@@ -46,14 +55,12 @@ export default async function HomePage({
     : matches;
 
   const live = filtered.filter((m) => m.status === "live" || m.status === "halftime");
-  const upcoming = filtered.filter((m) => m.status === "scheduled");
-  const recent = filtered.filter((m) => m.status === "finished").slice(-6).reverse();
 
   const todayCount = matches.filter((m) => formatMatchDate(m.scheduled_at) === "Today").length;
   const seasonName = matches[0]?.season?.name ?? "—";
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
       <Reveal>
         <Hero liveCount={live.length} todayCount={todayCount} seasonName={seasonName} />
       </Reveal>
@@ -62,30 +69,8 @@ export default async function HomePage({
         <SportFilters activeSport={selectedSport} />
       </Reveal>
 
-      {/* Live Now — realtime client component */}
-      <LiveScoreboard initialLive={live} sportSlug={selectedSport} />
-
-      {/* Upcoming */}
-      {upcoming.length > 0 && (
-        <section>
-          <SectionHeader Icon={CalendarDays} label="Upcoming" count={upcoming.length} />
-          <UpcomingList matches={upcoming} />
-        </section>
-      )}
-
-      {/* Recent Results */}
-      {recent.length > 0 && (
-        <section>
-          <SectionHeader Icon={History} label="Recent Results" count={recent.length} />
-          <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {recent.map((m) => (
-              <StaggerItem key={m.id}>
-                <MatchCard match={m} />
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </section>
-      )}
+      {/* FlashScore-style league feed — realtime, grouped by tournament */}
+      <LeagueFeed matches={filtered} />
 
       {filtered.length === 0 && (
         <Reveal>
@@ -96,47 +81,6 @@ export default async function HomePage({
           />
         </Reveal>
       )}
-    </div>
-  );
-}
-
-function SectionHeader({ Icon, label, count }: { Icon: LucideIcon; label: string; count?: number }) {
-  return (
-    <div className="flex items-center gap-2 mb-3.5 px-0.5">
-      <Icon className="h-5 w-5 text-vanguard-volt" strokeWidth={2.25} />
-      <h2 className="text-xl font-bold tracking-tight text-zinc-900 dark:text-white">{label}</h2>
-      {count !== undefined && (
-        <span className="rounded-full bg-vanguard-volt/10 dark:bg-vanguard-volt/20 text-vanguard-volt dark:text-vanguard-volt text-xs font-bold px-2 py-0.5">
-          {count}
-        </span>
-      )}
-    </div>
-  );
-}
-
-function UpcomingList({ matches }: { matches: Match[] }) {
-  const grouped = matches.reduce<Record<string, Match[]>>((acc, m) => {
-    const key = formatMatchDate(m.scheduled_at);
-    (acc[key] ??= []).push(m);
-    return acc;
-  }, {});
-
-  return (
-    <div className="space-y-5">
-      {Object.entries(grouped).map(([date, dayMatches]) => (
-        <div key={date}>
-          <p className="text-xs font-bold uppercase tracking-wide text-gray-400 dark:text-zinc-500 mb-2.5 px-0.5">
-            {date}
-          </p>
-          <Stagger className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {dayMatches.map((m) => (
-              <StaggerItem key={m.id}>
-                <MatchCard match={m} />
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </div>
-      ))}
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { X, Target } from "lucide-react";
 import type { MatchEvent, Player, Sport, Team } from "@/lib/supabase/types";
 import { computeSingleGameStats } from "@/lib/utils/singleGameStats";
+import { ShotDistribution } from "@/components/matches/ShotDistribution";
 
 type Props = {
   player: Player | null;
@@ -63,7 +64,7 @@ export function PlayerDrawer({ player, team, events, sport, onClose }: Props) {
               <span className="h-1.5 w-10 rounded-full bg-white/20" />
             </div>
 
-            <div className="px-5 pb-8 pb-safe">
+            <div className="px-5 pb-8 pb-safe max-h-[82vh] overflow-y-auto">
               {/* Player identity */}
               <div className="flex items-center justify-between gap-3 mb-5">
                 <div className="flex items-center gap-3 min-w-0">
@@ -97,12 +98,18 @@ export function PlayerDrawer({ player, team, events, sport, onClose }: Props) {
                 <StatTile label="Fouls" value={stats.fouls} accent="crimson" />
               </div>
 
-              {/* 14-Zone Shot Distribution — placeholder */}
-              <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-5 text-center">
-                <Target className="h-6 w-6 mx-auto mb-2 text-vanguard-volt" />
-                <p className="text-sm font-semibold text-zinc-300">14-Zone Shot Distribution</p>
-                <p className="text-xs text-zinc-500 mt-1">Zone telemetry coming soon</p>
-              </div>
+              {/* 14-Zone Shot Distribution */}
+              {sport.slug === "basketball" ? (
+                <ShotDistribution playerId={player.id} gameScore={stats.score} />
+              ) : (
+                <div className="rounded-2xl border border-dashed border-white/15 bg-white/[0.03] p-5 text-center">
+                  <Target className="h-6 w-6 mx-auto mb-2 text-vanguard-volt" />
+                  <p className="text-sm font-semibold text-zinc-300">Zone Telemetry</p>
+                  <p className="text-xs text-zinc-500 mt-1">
+                    Positional heat mapping coming soon for {sport.name.toLowerCase()}
+                  </p>
+                </div>
+              )}
             </div>
           </motion.div>
         </>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ChevronLeft, Radio, Clock } from "lucide-react";
+import { ChevronLeft, Radio, Clock, Play } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Match, MatchEvent, Player, Sport } from "@/lib/supabase/types";
 import { computePeriodScores } from "@/lib/utils/periodScores";
@@ -319,12 +319,16 @@ function PublicEventRow({
     gray: "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300",
   };
 
+  // Key moments (scores, red cards) carry a media slot ready for game-film reels.
+  const isKeyMoment =
+    (config?.affects_score && (config.score_value ?? 0) > 0) || event.event_type === "red_card";
+
   return (
     <div className="flex items-center gap-3 py-2 border-b border-zinc-50 dark:border-zinc-800/60 last:border-0">
       <span className={`grid place-items-center h-7 w-7 rounded-full shrink-0 ${colorMap[config?.color ?? "gray"]}`}>
         <EventIcon type={event.event_type} className="h-3.5 w-3.5" />
       </span>
-      <div className="flex-1 text-sm">
+      <div className="flex-1 min-w-0 text-sm">
         <span className="font-medium text-zinc-800 dark:text-zinc-100">{config?.label ?? event.event_type}</span>
         {event.player && (
           <>
@@ -342,6 +346,23 @@ function PublicEventRow({
       {event.match_minute && (
         <span className="text-xs text-zinc-400 shrink-0">{event.match_minute}&apos;</span>
       )}
+      {isKeyMoment && <MediaReelSlot />}
+    </div>
+  );
+}
+
+/** Aspect-locked placeholder for future Hudl-style highlight reels on key moments. */
+function MediaReelSlot() {
+  return (
+    <div
+      aria-label="Highlight reel coming soon"
+      className="shrink-0 w-[72px] aspect-video rounded-lg border border-white/10 bg-white/[0.04] grid place-items-center relative overflow-hidden"
+    >
+      <div aria-hidden className="absolute inset-0 bg-gradient-to-br from-vanguard-volt/[0.06] to-transparent" />
+      <div className="relative flex flex-col items-center gap-0.5">
+        <Play className="h-3.5 w-3.5 text-vanguard-volt" fill="currentColor" />
+        <span className="text-[7px] font-black uppercase tracking-widest text-zinc-500">Reel</span>
+      </div>
     </div>
   );
 }
