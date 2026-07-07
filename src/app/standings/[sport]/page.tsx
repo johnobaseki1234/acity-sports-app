@@ -1,8 +1,10 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { computeStandings } from "@/lib/utils/standings";
+import { enrichBasketballStandings, type BasketballRow } from "@/lib/utils/basketballStandings";
 import { SportIcon } from "@/components/ui/SportIcon";
+import { LeagueTags } from "@/components/home/LeagueTags";
+import { getActiveSeasons } from "@/lib/utils/leagues";
 import { Trophy, Swords } from "lucide-react";
 import type { Match, Season, Sport, Team } from "@/lib/supabase/types";
 
@@ -32,21 +34,14 @@ const MATCH_SELECT = `
   season:seasons(*, sport:sports(*))
 `;
 
-const SPORT_SWITCHER = [
-  { label: "Football",   slug: "football",   href: "/standings/football" },
-  { label: "Basketball", slug: "basketball", href: "/standings/basketball" },
-  { label: "Volleyball", slug: "volleyball", href: "/standings/volleyball" },
-] as const;
-
 export default async function StandingsPage({ params }: { params: Promise<{ sport: string }> }) {
   const { sport: sportSlug } = await params;
   const supabase = await createClient();
 
-  const { data: sport } = await supabase
-    .from("sports")
-    .select("*")
-    .eq("slug", sportSlug)
-    .single();
+  const [{ data: sport }, allSeasons] = await Promise.all([
+    supabase.from("sports").select("*").eq("slug", sportSlug).single(),
+    getActiveSeasons(supabase),
+  ]);
 
   if (!sport) notFound();
 
@@ -60,7 +55,7 @@ export default async function StandingsPage({ params }: { params: Promise<{ spor
   if (!season) {
     return (
       <div className="space-y-6">
-        <PageHeader sport={sport as Sport} activeSportSlug={sportSlug} />
+        <PageHeader sport={sport as Sport} activeSportSlug={sportSlug} seasons={allSeasons} />
         <EmptyState sport={sport as Sport} message="No active season yet" />
       </div>
     );
@@ -93,117 +88,124 @@ export default async function StandingsPage({ params }: { params: Promise<{ spor
 
   return (
     <div className="space-y-8">
-      <PageHeader sport={sport as Sport} season={season as Season} activeSportSlug={sportSlug} />
+      <PageHeader sport={sport as Sport} season={season as Season} activeSportSlug={sportSlug} seasons={allSeasons} />
 
-      {/* Regular Season — SofaScore-density grid */}
+      {/* Regular Season */}
       <section>
         <SectionTitle icon={<Trophy className="h-5 w-5" />} label="Regular Season" />
-        <div className="overflow-x-auto rounded-2xl border border-white/10 bg-zinc-900/70 backdrop-blur-xl">
-          <table className="w-full min-w-[620px] text-sm">
-            <thead className="bg-white/[0.03] border-b border-white/10 text-[10px] uppercase tracking-wider text-zinc-500">
-              <tr>
-                <th className="pl-3 pr-1 py-2.5 text-left font-black w-8">#</th>
-                <th className="px-2 py-2.5 text-left font-black">Team</th>
-                <th className="px-1.5 py-2.5 text-center font-black">P</th>
-                <th className="px-1.5 py-2.5 text-center font-black">W</th>
-                {!isBasketball && <th className="px-1.5 py-2.5 text-center font-black">D</th>}
-                <th className="px-1.5 py-2.5 text-center font-black">L</th>
-                <th className="px-1.5 py-2.5 text-center font-black hidden sm:table-cell">{isBasketball ? "PF" : "F"}</th>
-                <th className="px-1.5 py-2.5 text-center font-black hidden sm:table-cell">{isBasketball ? "PA" : "A"}</th>
-                <th className="px-1.5 py-2.5 text-center font-black">{isBasketball ? "+/−" : "GD"}</th>
-                <th className="px-2 py-2.5 text-center font-black text-vanguard-volt">PTS</th>
-                <th className="px-3 py-2.5 text-right font-black">Form</th>
-              </tr>
-            </thead>
-            <tbody className="text-zinc-300">
-              {table.map((row, index) => {
-                const isLeader = index === 0;
-                const isCutoff = index === 3 && table.length > 4;
-                const form = computeForm(row.team_id, (matches ?? []) as Match[]);
-                return (
-                  <tr
-                    key={row.team_id}
-                    className={`h-10 transition-colors hover:bg-white/[0.04] ${
-                      isLeader ? "bg-vanguard-volt/[0.06]" : ""
-                    } ${
-                      isCutoff
-                        ? "border-b-2 border-vanguard-volt/30"
-                        : "border-b border-white/5"
-                    }`}
-                  >
-                    <td className="pl-3 pr-1 py-1.5">
-                      <span
-                        className={`grid place-items-center w-5 h-5 rounded text-[10px] font-black tabular-nums ${
-                          isLeader
-                            ? "bg-vanguard-volt text-black shadow-sm shadow-vanguard-volt/40"
-                            : index < 4
-                            ? "text-vanguard-volt border border-vanguard-volt/30"
+        {isBasketball ? (
+          <BasketballStandingsTable
+            rows={enrichBasketballStandings(table, (matches ?? []) as Match[])}
+            leagueName={season?.name}
+          />
+        ) : (
+          <div className="overflow-x-auto rounded-2xl border border-white/10 bg-zinc-900/70 backdrop-blur-xl">
+            <table className="w-full min-w-[620px] text-sm">
+              <thead className="bg-white/[0.03] border-b border-white/10 text-[10px] uppercase tracking-wider text-zinc-500">
+                <tr>
+                  <th className="pl-3 pr-1 py-2.5 text-left font-black w-8">#</th>
+                  <th className="px-2 py-2.5 text-left font-black">Team</th>
+                  <th className="px-1.5 py-2.5 text-center font-black">P</th>
+                  <th className="px-1.5 py-2.5 text-center font-black">W</th>
+                  <th className="px-1.5 py-2.5 text-center font-black">D</th>
+                  <th className="px-1.5 py-2.5 text-center font-black">L</th>
+                  <th className="px-1.5 py-2.5 text-center font-black hidden sm:table-cell">F</th>
+                  <th className="px-1.5 py-2.5 text-center font-black hidden sm:table-cell">A</th>
+                  <th className="px-1.5 py-2.5 text-center font-black">GD</th>
+                  <th className="px-2 py-2.5 text-center font-black text-vanguard-volt">PTS</th>
+                  <th className="px-3 py-2.5 text-right font-black">Form</th>
+                </tr>
+              </thead>
+              <tbody className="text-zinc-300">
+                {table.map((row, index) => {
+                  const isLeader = index === 0;
+                  const isCutoff = index === 3 && table.length > 4;
+                  const form = computeForm(row.team_id, (matches ?? []) as Match[]);
+                  return (
+                    <tr
+                      key={row.team_id}
+                      className={`h-10 transition-colors hover:bg-white/[0.04] ${
+                        isLeader ? "bg-vanguard-volt/[0.06]" : ""
+                      } ${
+                        isCutoff
+                          ? "border-b-2 border-vanguard-volt/30"
+                          : "border-b border-white/5"
+                      }`}
+                    >
+                      <td className="pl-3 pr-1 py-1.5">
+                        <span
+                          className={`grid place-items-center w-5 h-5 rounded text-[10px] font-black tabular-nums ${
+                            isLeader
+                              ? "bg-vanguard-volt text-black shadow-sm shadow-vanguard-volt/40"
+                              : index < 4
+                              ? "text-vanguard-volt border border-vanguard-volt/30"
+                              : "text-zinc-500"
+                          }`}
+                        >
+                          {index + 1}
+                        </span>
+                      </td>
+                      <td className="px-2 py-1.5">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span
+                            className="grid place-items-center h-5 w-5 rounded text-[8px] font-black text-white shrink-0"
+                            style={{ background: row.team?.primary_color ?? "#52525b" }}
+                          >
+                            {row.team?.short_name?.slice(0, 2).toUpperCase()}
+                          </span>
+                          <span className={`truncate text-[13px] ${isLeader ? "font-black text-white" : "font-semibold text-zinc-200"}`}>
+                            {row.team?.name}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="px-1.5 py-1.5 text-center tabular-nums text-xs">{row.played}</td>
+                      <td className="px-1.5 py-1.5 text-center tabular-nums text-xs font-bold text-zinc-200">{row.won}</td>
+                      <td className="px-1.5 py-1.5 text-center tabular-nums text-xs">{row.drawn}</td>
+                      <td className="px-1.5 py-1.5 text-center tabular-nums text-xs">{row.lost}</td>
+                      <td className="px-1.5 py-1.5 text-center tabular-nums text-xs hidden sm:table-cell">{row.goals_for}</td>
+                      <td className="px-1.5 py-1.5 text-center tabular-nums text-xs hidden sm:table-cell">{row.goals_against}</td>
+                      <td
+                        className={`px-1.5 py-1.5 text-center tabular-nums text-xs font-black ${
+                          row.goal_diff > 0
+                            ? "text-vanguard-volt"
+                            : row.goal_diff < 0
+                            ? "text-vanguard-crimson"
                             : "text-zinc-500"
                         }`}
                       >
-                        {index + 1}
-                      </span>
-                    </td>
-                    <td className="px-2 py-1.5">
-                      <div className="flex items-center gap-2 min-w-0">
-                        <span
-                          className="grid place-items-center h-5 w-5 rounded text-[8px] font-black text-white shrink-0"
-                          style={{ background: row.team?.primary_color ?? "#52525b" }}
-                        >
-                          {row.team?.short_name?.slice(0, 2).toUpperCase()}
+                        {row.goal_diff > 0 ? "+" : ""}
+                        {row.goal_diff}
+                      </td>
+                      <td className="px-2 py-1.5 text-center">
+                        <span className={`text-sm font-black tabular-nums ${isLeader ? "text-vanguard-volt" : "text-white"}`}>
+                          {row.points}
                         </span>
-                        <span className={`truncate text-[13px] ${isLeader ? "font-black text-white" : "font-semibold text-zinc-200"}`}>
-                          {row.team?.name}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-1.5 py-1.5 text-center tabular-nums text-xs">{row.played}</td>
-                    <td className="px-1.5 py-1.5 text-center tabular-nums text-xs font-bold text-zinc-200">{row.won}</td>
-                    {!isBasketball && (
-                      <td className="px-1.5 py-1.5 text-center tabular-nums text-xs">{row.drawn}</td>
-                    )}
-                    <td className="px-1.5 py-1.5 text-center tabular-nums text-xs">{row.lost}</td>
-                    <td className="px-1.5 py-1.5 text-center tabular-nums text-xs hidden sm:table-cell">{row.goals_for}</td>
-                    <td className="px-1.5 py-1.5 text-center tabular-nums text-xs hidden sm:table-cell">{row.goals_against}</td>
-                    <td
-                      className={`px-1.5 py-1.5 text-center tabular-nums text-xs font-black ${
-                        row.goal_diff > 0
-                          ? "text-vanguard-volt"
-                          : row.goal_diff < 0
-                          ? "text-vanguard-crimson"
-                          : "text-zinc-500"
-                      }`}
-                    >
-                      {row.goal_diff > 0 ? "+" : ""}
-                      {row.goal_diff}
-                    </td>
-                    <td className="px-2 py-1.5 text-center">
-                      <span className={`text-sm font-black tabular-nums ${isLeader ? "text-vanguard-volt" : "text-white"}`}>
-                        {row.points}
-                      </span>
-                    </td>
-                    <td className="px-3 py-1.5">
-                      <div className="flex items-center justify-end gap-1">
-                        {form.length === 0 ? (
-                          <span className="text-[10px] text-zinc-600">—</span>
-                        ) : (
-                          form.map((r, i) => <FormBlock key={i} result={r} latest={i === form.length - 1} />)
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="px-3 py-1.5">
+                        <div className="flex items-center justify-end gap-1">
+                          {form.length === 0 ? (
+                            <span className="text-[10px] text-zinc-600">—</span>
+                          ) : (
+                            form.map((r, i) => <FormBlock key={i} result={r} latest={i === form.length - 1} />)
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
         <div className="flex items-center gap-4 mt-2 px-1 text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
           <span className="inline-flex items-center gap-1.5">
             <span className="h-2 w-2 rounded-sm bg-vanguard-volt" /> Playoff line (top 4)
           </span>
-          <span className="inline-flex items-center gap-1.5">
-            <span className="h-2 w-2 rounded-sm bg-vanguard-crimson" /> Loss form
-          </span>
+          {!isBasketball && (
+            <span className="inline-flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-sm bg-vanguard-crimson" /> Loss form
+            </span>
+          )}
         </div>
         {table.length === 0 && (
           <EmptyState sport={sport as Sport} message="No teams have been added to this season" />
@@ -217,6 +219,109 @@ export default async function StandingsPage({ params }: { params: Promise<{ spor
       {isBasketball && table.length >= 2 && (
         <BasketballPlayoffsSection teams={table} />
       )}
+    </div>
+  );
+}
+
+// ─── Basketball NBA/NCAA Record Grid ─────────────────────────────────────────
+
+function BasketballStandingsTable({
+  rows,
+  leagueName,
+}: {
+  rows: BasketballRow[];
+  leagueName?: string;
+}) {
+  return (
+    <div className="overflow-x-auto rounded-2xl border border-white/10 bg-zinc-900/70 backdrop-blur-xl">
+      {leagueName && (
+        <div className="px-3 py-2 border-b border-white/10 bg-white/[0.03]">
+          <span className="text-[10px] font-black uppercase tracking-widest text-vanguard-volt">
+            {leagueName}
+          </span>
+        </div>
+      )}
+      <table className="w-full min-w-[560px] text-sm">
+        <thead className="bg-white/[0.03] border-b border-white/10 text-[10px] uppercase tracking-wider text-zinc-500">
+          <tr>
+            <th className="pl-3 pr-1 py-2.5 text-left font-black w-8">#</th>
+            <th className="px-2 py-2.5 text-left font-black">Team</th>
+            <th className="px-1.5 py-2.5 text-center font-black">W-L</th>
+            <th className="px-1.5 py-2.5 text-center font-black">WIN%</th>
+            <th className="px-1.5 py-2.5 text-center font-black">GB</th>
+            <th className="px-1.5 py-2.5 text-center font-black hidden sm:table-cell">PF</th>
+            <th className="px-1.5 py-2.5 text-center font-black hidden sm:table-cell">PA</th>
+            <th className="px-3 py-2.5 text-right font-black">Streak</th>
+          </tr>
+        </thead>
+        <tbody className="text-zinc-300">
+          {rows.map((row, index) => {
+            const isLeader = index === 0;
+            const isCutoff = index === 3 && rows.length > 4;
+            return (
+              <tr
+                key={row.team_id}
+                className={`h-10 transition-colors hover:bg-white/[0.04] ${
+                  isLeader ? "bg-vanguard-volt/[0.06]" : ""
+                } ${isCutoff ? "border-b-2 border-vanguard-volt/30" : "border-b border-white/5"}`}
+              >
+                <td className="pl-3 pr-1 py-1.5">
+                  <span
+                    className={`grid place-items-center w-5 h-5 rounded text-[10px] font-black tabular-nums ${
+                      isLeader
+                        ? "bg-vanguard-volt text-black shadow-sm shadow-vanguard-volt/40"
+                        : index < 4
+                        ? "text-vanguard-volt border border-vanguard-volt/30"
+                        : "text-zinc-500"
+                    }`}
+                  >
+                    {index + 1}
+                  </span>
+                </td>
+                <td className="px-2 py-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <span
+                      className="grid place-items-center h-5 w-5 rounded text-[8px] font-black text-white shrink-0"
+                      style={{ background: row.team?.primary_color ?? "#52525b" }}
+                    >
+                      {row.team?.short_name?.slice(0, 2).toUpperCase()}
+                    </span>
+                    <span className={`truncate text-[13px] ${isLeader ? "font-black text-white" : "font-semibold text-zinc-200"}`}>
+                      {row.team?.name}
+                    </span>
+                  </div>
+                </td>
+                <td className="px-1.5 py-1.5 text-center tabular-nums text-xs font-bold text-zinc-100">
+                  {row.won}-{row.lost}
+                </td>
+                <td className="px-1.5 py-1.5 text-center tabular-nums text-xs font-black text-vanguard-volt">
+                  .{Math.round(row.winPct * 1000).toString().padStart(3, "0")}
+                </td>
+                <td className="px-1.5 py-1.5 text-center tabular-nums text-xs text-zinc-400">
+                  {row.gamesBehind === 0 ? "—" : row.gamesBehind.toFixed(1)}
+                </td>
+                <td className="px-1.5 py-1.5 text-center tabular-nums text-xs hidden sm:table-cell">{row.goals_for}</td>
+                <td className="px-1.5 py-1.5 text-center tabular-nums text-xs hidden sm:table-cell">{row.goals_against}</td>
+                <td className="px-3 py-1.5 text-right">
+                  {row.streak ? (
+                    <span
+                      className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-black tabular-nums ${
+                        row.streak.result === "W"
+                          ? "bg-vanguard-volt/15 text-vanguard-volt"
+                          : "bg-vanguard-crimson/15 text-vanguard-crimson"
+                      }`}
+                    >
+                      {row.streak.result}{row.streak.count}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-zinc-600">—</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }
@@ -487,39 +592,25 @@ function PageHeader({
   sport,
   season,
   activeSportSlug,
+  seasons,
 }: {
   sport: Sport;
   season?: Season;
   activeSportSlug: string;
+  seasons: Season[];
 }) {
   return (
     <div className="space-y-3">
       <div>
         {season && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{season.name}</p>
+          <p className="text-sm text-zinc-400">{season.name}</p>
         )}
-        <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
+        <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight text-white">
           <SportIcon slug={sport.slug} className="h-8 w-8 text-vanguard-volt" />
           {sport.name} Standings
         </h1>
       </div>
-      {/* Global Sport Switcher */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-        {SPORT_SWITCHER.map(({ label, slug, href }) => (
-          <Link
-            key={label}
-            href={href}
-            className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 ${
-              slug === activeSportSlug
-                ? "bg-vanguard-volt text-black shadow-md shadow-vanguard-volt/25"
-                : "bg-white/70 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800"
-            }`}
-          >
-            <SportIcon slug={slug} className="h-4 w-4" strokeWidth={2.25} />
-            {label}
-          </Link>
-        ))}
-      </div>
+      <LeagueTags mode="standings" seasons={seasons} activeSportSlug={activeSportSlug} />
     </div>
   );
 }
