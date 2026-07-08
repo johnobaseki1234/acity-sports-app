@@ -44,6 +44,15 @@ export default function ServiceWorkerRegister() {
       }
     };
 
+    // `load` may have already fired before this effect runs (e.g. once
+    // hydration finishes on a client-rendered route) — in that case the
+    // listener below would never fire and the SW would silently never
+    // register or pick up updates. Register immediately when that's the case.
+    if (document.readyState === "complete") {
+      registerSW();
+      return;
+    }
+
     window.addEventListener("load", registerSW);
 
     return () => {

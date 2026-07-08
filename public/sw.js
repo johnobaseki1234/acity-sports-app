@@ -1,4 +1,6 @@
-const CACHE_NAME = "vanguard-v1";
+// Bump this on every deploy that changes caching behavior — it's the only
+// way the browser detects this file changed and installs the new worker.
+const CACHE_NAME = "vanguard-v2";
 
 const OFFLINE_FILES = [
   "/offline.html",
@@ -38,25 +40,18 @@ self.addEventListener("fetch", (event) => {
 
   if (url.origin !== location.origin) return;
 
-  // HTML pages
+  // HTML pages — network-only. Never cache a full page: every deploy ships
+  // a fresh build with newly hashed /_next/static/<buildId>/ asset paths, and
+  // a cached page from a previous deploy would reference paths Vercel has
+  // since garbage-collected once the next deployment is promoted (this is
+  // what caused "Deployment not found" on installs that hit this fallback).
+  // The only offline fallback is the static offline.html shell, which links
+  // to no build-specific assets.
   if (event.request.mode === "navigate") {
     event.respondWith(
-      fetch(event.request)
-        .then((response) => {
-          const clone = response.clone();
-
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, clone);
-          });
-
-          return response;
-        })
-        .catch(async () => {
-          return (
-            (await caches.match(event.request)) ||
-            caches.match("/offline.html")
-          );
-        })
+      fetch(event.request, { cache: "no-store" }).catch(
+        () => caches.match("/offline.html")
+      )
     );
 
     return;
