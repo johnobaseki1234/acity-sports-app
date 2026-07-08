@@ -1,8 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-const STEALTH_PATH = "/stealth";
-
+/** Keeps the Supabase session cookie fresh across server-rendered routes. */
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -29,39 +28,7 @@ export async function middleware(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (request.nextUrl.pathname.startsWith(STEALTH_PATH)) {
-    return supabaseResponse;
-  }
-
-  const { data: config } = await supabase
-    .from("app_config")
-    .select("value")
-    .eq("key", "stealth_mode_enabled")
-    .maybeSingle();
-
-  const stealthModeEnabled = config?.value === true;
-
-  if (!stealthModeEnabled) {
-    return supabaseResponse;
-  }
-
-  if (!user?.email) {
-    return NextResponse.redirect(new URL(STEALTH_PATH, request.url));
-  }
-
-  const { data: allowlisted } = await supabase
-    .from("stealth_allowlist")
-    .select("email")
-    .eq("email", user.email)
-    .maybeSingle();
-
-  if (!allowlisted) {
-    return NextResponse.redirect(new URL(`${STEALTH_PATH}?denied=1`, request.url));
-  }
+  await supabase.auth.getUser();
 
   return supabaseResponse;
 }

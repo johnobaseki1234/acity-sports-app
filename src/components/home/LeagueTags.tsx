@@ -7,16 +7,18 @@ import { SportIcon } from "@/components/ui/SportIcon";
 import { leagueTagLabel } from "@/lib/utils/leagueLabel";
 import { useLeagueOfInterest } from "@/hooks/useLeagueOfInterest";
 
-const DEFAULT_TAG_LABELS = ["ACFL", "ACBL"];
-
-/** The seasons a visitor actually cares about: their saved picks, or the platform default. */
+/**
+ * The seasons a visitor actually cares about: their saved picks, or every
+ * active league across every school — the wide-open public default so a
+ * first-time visitor with no local preferences sees everything at once.
+ */
 function interestedSeasons(seasons: Season[], leagueIds: string[]): Season[] {
   if (leagueIds.length > 0) {
     const byId = new Set(leagueIds);
     const picked = seasons.filter((s) => byId.has(s.id));
     if (picked.length > 0) return picked;
   }
-  return seasons.filter((s) => DEFAULT_TAG_LABELS.includes(leagueTagLabel(s)));
+  return seasons;
 }
 
 type FilterProps = {

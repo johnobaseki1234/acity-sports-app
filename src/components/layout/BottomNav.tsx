@@ -17,7 +17,6 @@ export default function BottomNav() {
   if (
     pathname.startsWith("/admin") ||
     pathname.startsWith("/scorer") ||
-    pathname.startsWith("/stealth") ||
     pathname.startsWith("/login") ||
     pathname.startsWith("/onboarding")
   )
