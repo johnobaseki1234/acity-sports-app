@@ -3,7 +3,8 @@ import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatMatchDate, formatMatchTime, getStatusLabel } from "@/lib/utils/match";
 import { SportIcon } from "@/components/ui/SportIcon";
-import { Sparkles } from "lucide-react";
+import { LeagueTags } from "@/components/home/LeagueTags";
+import { getActiveSeasons } from "@/lib/utils/leagues";
 import type { Match, Season, Sport, Team } from "@/lib/supabase/types";
 
 const MATCH_SELECT = `
@@ -12,13 +13,6 @@ const MATCH_SELECT = `
   away_team:teams!matches_away_team_id_fkey(*),
   season:seasons(*, sport:sports(*))
 `;
-
-const SPORT_SWITCHER = [
-  { label: "All",        slug: null,         href: "/fixtures" },
-  { label: "Football",   slug: "football",   href: "/fixtures/football" },
-  { label: "Basketball", slug: "basketball", href: "/fixtures/basketball" },
-  { label: "Volleyball", slug: "volleyball", href: "/fixtures/volleyball" },
-] as const;
 
 const STATUS_FILTERS = [
   { label: "All",      value: "all" },
@@ -37,11 +31,10 @@ export default async function FixturesPage({
   const [{ sport: sportSlug }, filters] = await Promise.all([params, searchParams]);
   const supabase = await createClient();
 
-  const { data: sport } = await supabase
-    .from("sports")
-    .select("*")
-    .eq("slug", sportSlug)
-    .single();
+  const [{ data: sport }, allSeasons] = await Promise.all([
+    supabase.from("sports").select("*").eq("slug", sportSlug).single(),
+    getActiveSeasons(supabase),
+  ]);
 
   if (!sport) notFound();
 
@@ -55,7 +48,7 @@ export default async function FixturesPage({
   if (!season) {
     return (
       <div className="space-y-5">
-        <PageHeader sport={sport as Sport} activeSportSlug={sportSlug} />
+        <PageHeader sport={sport as Sport} activeSportSlug={sportSlug} seasons={allSeasons} />
         <SportEmptyState sport={sport as Sport} message="No active season yet" />
       </div>
     );
@@ -99,8 +92,8 @@ export default async function FixturesPage({
 
   return (
     <div className="space-y-5">
-      {/* Tier 1: Sport Switcher + Page Title */}
-      <PageHeader sport={sport as Sport} season={season as Season} activeSportSlug={sportSlug} />
+      {/* Tier 1: League Tags + Page Title */}
+      <PageHeader sport={sport as Sport} season={season as Season} activeSportSlug={sportSlug} seasons={allSeasons} />
 
       {/* Tier 2: Status Pills */}
       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
@@ -171,34 +164,20 @@ function PageHeader({
   sport,
   season,
   activeSportSlug,
+  seasons,
 }: {
   sport: Sport;
   season?: Season;
   activeSportSlug: string;
+  seasons: Season[];
 }) {
   return (
     <div className="space-y-3">
-      <div>
-        {season && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">{season.name}</p>
-        )}
-        <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight text-zinc-900 dark:text-white">
-          <SportIcon slug={sport.slug} className="h-8 w-8 text-vanguard-volt" />
-          {sport.name} Fixtures
-        </h1>
-      </div>
-      {/* Sport Switcher */}
-      <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
-        {SPORT_SWITCHER.map(({ label, slug, href }) => (
-          <SportSwitcherPill
-            key={label}
-            label={label}
-            slug={slug ?? undefined}
-            href={href}
-            active={slug === activeSportSlug}
-          />
-        ))}
-      </div>
+      <h1 className="flex items-center gap-2.5 text-3xl font-black tracking-tight text-white">
+        <SportIcon slug={sport.slug} className="h-7 w-7 text-vanguard-volt" />
+        {season?.name ?? "Fixtures"}
+      </h1>
+      <LeagueTags mode="route" seasons={seasons} activeSportSlug={activeSportSlug} routeBase="/fixtures" />
     </div>
   );
 }
@@ -225,36 +204,6 @@ function FixtureRow({ match }: { match: Match }) {
       {match.matchday && (
         <div className="mt-2 text-center text-xs text-gray-400">Matchday {match.matchday}</div>
       )}
-    </Link>
-  );
-}
-
-function SportSwitcherPill({
-  label,
-  slug,
-  href,
-  active,
-}: {
-  label: string;
-  slug?: string;
-  href: string;
-  active: boolean;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 ${
-        active
-          ? "bg-vanguard-volt text-black shadow-md shadow-vanguard-volt/25"
-          : "bg-white/70 dark:bg-zinc-800/70 border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300 hover:bg-white dark:hover:bg-zinc-800"
-      }`}
-    >
-      {slug ? (
-        <SportIcon slug={slug} className="h-4 w-4" strokeWidth={2.25} />
-      ) : (
-        <Sparkles className="h-4 w-4" strokeWidth={2.25} />
-      )}
-      {label}
     </Link>
   );
 }

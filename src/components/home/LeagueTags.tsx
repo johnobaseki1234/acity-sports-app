@@ -26,19 +26,21 @@ type FilterProps = {
   activeSeasonId?: string;
 };
 
-type StandingsProps = {
-  mode: "standings";
+type RouteProps = {
+  mode: "route";
   seasons: Season[];
   activeSportSlug: string;
+  /** Path prefix a tag routes to, e.g. "/standings" → /standings/basketball. */
+  routeBase: string;
 };
 
-export function LeagueTags(props: FilterProps | StandingsProps) {
+export function LeagueTags(props: FilterProps | RouteProps) {
   const { leagueIds } = useLeagueOfInterest();
   const tags = interestedSeasons(props.seasons, leagueIds);
 
   if (tags.length === 0) return null;
 
-  if (props.mode === "standings") {
+  if (props.mode === "route") {
     return (
       <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
         {tags.map((season) => {
@@ -46,7 +48,7 @@ export function LeagueTags(props: FilterProps | StandingsProps) {
           return (
             <Link
               key={season.id}
-              href={`/standings/${season.sport?.slug}`}
+              href={`${props.routeBase}/${season.sport?.slug}`}
               className={`shrink-0 flex items-center gap-2 px-4 py-2 rounded-2xl text-sm font-semibold transition-all duration-300 ${
                 active
                   ? "bg-vanguard-volt text-black shadow-md shadow-vanguard-volt/25"

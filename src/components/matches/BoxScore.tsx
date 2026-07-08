@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Link from "next/link";
 import type { MatchEvent, Player, Sport, Team } from "@/lib/supabase/types";
 import {
   computeSingleGameStats,
@@ -16,7 +17,6 @@ type Props = {
   awayRoster: Player[];
   events: MatchEvent[];
   sport: Sport;
-  onSelectPlayer: (p: Player) => void;
 };
 
 type Row = { player: Player; stats: SingleGameStats };
@@ -28,7 +28,6 @@ export function BoxScore({
   awayRoster,
   events,
   sport,
-  onSelectPlayer,
 }: Props) {
   const isBasketball = sport.slug === "basketball";
   const scoreLabel = sport.slug === "football" ? "GLS" : "PTS";
@@ -50,8 +49,8 @@ export function BoxScore({
   if (isBasketball) {
     return (
       <div className="space-y-4">
-        <NcaaTeamGrid teamName={homeTeam?.name ?? "Home"} rows={homeRows} onSelectPlayer={onSelectPlayer} />
-        <NcaaTeamGrid teamName={awayTeam?.name ?? "Away"} rows={awayRows} onSelectPlayer={onSelectPlayer} />
+        <NcaaTeamGrid teamName={homeTeam?.name ?? "Home"} rows={homeRows} />
+        <NcaaTeamGrid teamName={awayTeam?.name ?? "Away"} rows={awayRows} />
       </div>
     );
   }
@@ -64,7 +63,6 @@ export function BoxScore({
         scoreLabel={scoreLabel}
         defenseLabel={defenseLabel}
         sportSlug={sport.slug}
-        onSelectPlayer={onSelectPlayer}
       />
       <TeamGrid
         teamName={awayTeam?.name ?? "Away"}
@@ -72,9 +70,25 @@ export function BoxScore({
         scoreLabel={scoreLabel}
         defenseLabel={defenseLabel}
         sportSlug={sport.slug}
-        onSelectPlayer={onSelectPlayer}
       />
     </div>
+  );
+}
+
+/** Player name cell that routes to the player's profile hub. */
+function PlayerNameCell({ player }: { player: Player }) {
+  return (
+    <Link
+      href={`/player/${player.id}`}
+      className="group/pl flex items-center gap-2 text-left w-full transition-all active:scale-[0.98] hover:opacity-100 opacity-95"
+    >
+      <span className="grid place-items-center h-6 w-6 shrink-0 rounded-md bg-white/10 text-[10px] font-bold tabular-nums text-zinc-400">
+        {player.jersey_number}
+      </span>
+      <span className="font-semibold text-zinc-100 truncate group-hover/pl:text-vanguard-volt transition-colors">
+        {player.name}
+      </span>
+    </Link>
   );
 }
 
@@ -82,11 +96,9 @@ export function BoxScore({
 function NcaaTeamGrid({
   teamName,
   rows,
-  onSelectPlayer,
 }: {
   teamName: string;
   rows: Row[];
-  onSelectPlayer: (p: Player) => void;
 }) {
   if (rows.length === 0) return null;
 
@@ -123,15 +135,7 @@ function NcaaTeamGrid({
                   className="border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-colors"
                 >
                   <td className="pl-4 pr-2 py-2">
-                    <button
-                      onClick={() => onSelectPlayer(player)}
-                      className="flex items-center gap-2 text-left w-full active:scale-[0.98] transition"
-                    >
-                      <span className="grid place-items-center h-6 w-6 shrink-0 rounded-md bg-white/10 text-[10px] font-bold tabular-nums text-zinc-400">
-                        {player.jersey_number}
-                      </span>
-                      <span className="font-semibold text-zinc-100 truncate">{player.name}</span>
-                    </button>
+                    <PlayerNameCell player={player} />
                   </td>
                   <td className={`text-right px-1.5 py-2 tabular-nums font-black ${stats.score > 0 ? "text-vanguard-volt" : "text-zinc-600"}`}>
                     {stats.score}
@@ -179,14 +183,12 @@ function TeamGrid({
   scoreLabel,
   defenseLabel,
   sportSlug,
-  onSelectPlayer,
 }: {
   teamName: string;
   rows: Row[];
   scoreLabel: string;
   defenseLabel: string;
   sportSlug: Sport["slug"];
-  onSelectPlayer: (p: Player) => void;
 }) {
   if (rows.length === 0) return null;
 
@@ -212,15 +214,7 @@ function TeamGrid({
                 className="border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-colors"
               >
                 <td className="pl-4 pr-2 py-2">
-                  <button
-                    onClick={() => onSelectPlayer(player)}
-                    className="flex items-center gap-2 text-left w-full active:scale-[0.98] transition"
-                  >
-                    <span className="grid place-items-center h-6 w-6 shrink-0 rounded-md bg-white/10 text-[10px] font-bold tabular-nums text-zinc-400">
-                      {player.jersey_number}
-                    </span>
-                    <span className="font-medium text-zinc-100 truncate">{player.name}</span>
-                  </button>
+                  <PlayerNameCell player={player} />
                 </td>
                 <td className={`text-right px-2 py-2 tabular-nums font-bold ${stats.score > 0 ? "text-vanguard-volt" : "text-zinc-600"}`}>
                   {stats.score}

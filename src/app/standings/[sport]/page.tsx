@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { computeStandings } from "@/lib/utils/standings";
@@ -146,17 +147,7 @@ export default async function StandingsPage({ params }: { params: Promise<{ spor
                         </span>
                       </td>
                       <td className="px-2 py-1.5">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span
-                            className="grid place-items-center h-5 w-5 rounded text-[8px] font-black text-white shrink-0"
-                            style={{ background: row.team?.primary_color ?? "#52525b" }}
-                          >
-                            {row.team?.short_name?.slice(0, 2).toUpperCase()}
-                          </span>
-                          <span className={`truncate text-[13px] ${isLeader ? "font-black text-white" : "font-semibold text-zinc-200"}`}>
-                            {row.team?.name}
-                          </span>
-                        </div>
+                        <TeamCell team={row.team} emphasis={isLeader} />
                       </td>
                       <td className="px-1.5 py-1.5 text-center tabular-nums text-xs">{row.played}</td>
                       <td className="px-1.5 py-1.5 text-center tabular-nums text-xs font-bold text-zinc-200">{row.won}</td>
@@ -241,17 +232,17 @@ function BasketballStandingsTable({
           </span>
         </div>
       )}
-      <table className="w-full min-w-[560px] text-sm">
-        <thead className="bg-white/[0.03] border-b border-white/10 text-[10px] uppercase tracking-wider text-zinc-500">
+      <table className="w-full min-w-[600px] text-sm">
+        <thead className="bg-white/[0.03] border-b border-white/10 text-[10px] uppercase tracking-[0.12em] text-zinc-500">
           <tr>
             <th className="pl-3 pr-1 py-2.5 text-left font-black w-8">#</th>
             <th className="px-2 py-2.5 text-left font-black">Team</th>
-            <th className="px-1.5 py-2.5 text-center font-black">W-L</th>
-            <th className="px-1.5 py-2.5 text-center font-black">WIN%</th>
-            <th className="px-1.5 py-2.5 text-center font-black">GB</th>
-            <th className="px-1.5 py-2.5 text-center font-black hidden sm:table-cell">PF</th>
-            <th className="px-1.5 py-2.5 text-center font-black hidden sm:table-cell">PA</th>
-            <th className="px-3 py-2.5 text-right font-black">Streak</th>
+            <th className="px-2 py-2.5 text-center font-black w-10">W</th>
+            <th className="px-2 py-2.5 text-center font-black w-10">L</th>
+            <th className="px-2 py-2.5 text-center font-black w-16">WIN%</th>
+            <th className="px-2 py-2.5 text-center font-black w-12">GB</th>
+            <th className="px-2 py-2.5 text-center font-black w-20">PTS DIFF</th>
+            <th className="px-3 py-2.5 text-right font-black w-16">STRK</th>
           </tr>
         </thead>
         <tbody className="text-zinc-300">
@@ -261,7 +252,7 @@ function BasketballStandingsTable({
             return (
               <tr
                 key={row.team_id}
-                className={`h-10 transition-colors hover:bg-white/[0.04] ${
+                className={`h-11 transition-colors hover:bg-white/[0.04] ${
                   isLeader ? "bg-vanguard-volt/[0.06]" : ""
                 } ${isCutoff ? "border-b-2 border-vanguard-volt/30" : "border-b border-white/5"}`}
               >
@@ -279,29 +270,28 @@ function BasketballStandingsTable({
                   </span>
                 </td>
                 <td className="px-2 py-1.5">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <span
-                      className="grid place-items-center h-5 w-5 rounded text-[8px] font-black text-white shrink-0"
-                      style={{ background: row.team?.primary_color ?? "#52525b" }}
-                    >
-                      {row.team?.short_name?.slice(0, 2).toUpperCase()}
-                    </span>
-                    <span className={`truncate text-[13px] ${isLeader ? "font-black text-white" : "font-semibold text-zinc-200"}`}>
-                      {row.team?.name}
-                    </span>
-                  </div>
+                  <TeamCell team={row.team} emphasis={isLeader} />
                 </td>
-                <td className="px-1.5 py-1.5 text-center tabular-nums text-xs font-bold text-zinc-100">
-                  {row.won}-{row.lost}
-                </td>
-                <td className="px-1.5 py-1.5 text-center tabular-nums text-xs font-black text-vanguard-volt">
+                <td className="px-2 py-1.5 text-center tabular-nums text-sm font-black text-white">{row.won}</td>
+                <td className="px-2 py-1.5 text-center tabular-nums text-sm font-bold text-zinc-400">{row.lost}</td>
+                <td className="px-2 py-1.5 text-center tabular-nums text-xs font-black text-vanguard-volt">
                   .{Math.round(row.winPct * 1000).toString().padStart(3, "0")}
                 </td>
-                <td className="px-1.5 py-1.5 text-center tabular-nums text-xs text-zinc-400">
+                <td className="px-2 py-1.5 text-center tabular-nums text-xs text-zinc-400">
                   {row.gamesBehind === 0 ? "—" : row.gamesBehind.toFixed(1)}
                 </td>
-                <td className="px-1.5 py-1.5 text-center tabular-nums text-xs hidden sm:table-cell">{row.goals_for}</td>
-                <td className="px-1.5 py-1.5 text-center tabular-nums text-xs hidden sm:table-cell">{row.goals_against}</td>
+                <td
+                  className={`px-2 py-1.5 text-center tabular-nums text-xs font-black ${
+                    row.goal_diff > 0
+                      ? "text-vanguard-volt"
+                      : row.goal_diff < 0
+                      ? "text-vanguard-crimson"
+                      : "text-zinc-500"
+                  }`}
+                >
+                  {row.goal_diff > 0 ? "+" : ""}
+                  {row.goal_diff}
+                </td>
                 <td className="px-3 py-1.5 text-right">
                   {row.streak ? (
                     <span
@@ -323,6 +313,40 @@ function BasketballStandingsTable({
         </tbody>
       </table>
     </div>
+  );
+}
+
+// ─── Interactive team cell (routes to the team profile hub) ──────────────────
+
+function TeamCell({ team, emphasis }: { team?: Team; emphasis?: boolean }) {
+  const badge = (
+    <span
+      className="grid place-items-center h-5 w-5 rounded text-[8px] font-black text-white shrink-0"
+      style={{ background: team?.primary_color ?? "#52525b" }}
+    >
+      {team?.short_name?.slice(0, 2).toUpperCase()}
+    </span>
+  );
+  const label = (
+    <span className={`truncate text-[13px] ${emphasis ? "font-black text-white" : "font-semibold text-zinc-200"}`}>
+      {team?.name}
+    </span>
+  );
+
+  if (!team?.slug) {
+    return <div className="flex items-center gap-2 min-w-0">{badge}{label}</div>;
+  }
+
+  return (
+    <Link
+      href={`/team/${team.slug}`}
+      className="group/team flex items-center gap-2 min-w-0 transition-all duration-200 hover:opacity-100 opacity-90 hover:scale-[1.02] origin-left"
+    >
+      {badge}
+      <span className={`truncate text-[13px] group-hover/team:text-vanguard-volt transition-colors ${emphasis ? "font-black text-white" : "font-semibold text-zinc-200"}`}>
+        {team?.name}
+      </span>
+    </Link>
   );
 }
 
@@ -601,16 +625,11 @@ function PageHeader({
 }) {
   return (
     <div className="space-y-3">
-      <div>
-        {season && (
-          <p className="text-sm text-zinc-400">{season.name}</p>
-        )}
-        <h1 className="flex items-center gap-2.5 text-4xl font-black tracking-tight text-white">
-          <SportIcon slug={sport.slug} className="h-8 w-8 text-vanguard-volt" />
-          {sport.name} Standings
-        </h1>
-      </div>
-      <LeagueTags mode="standings" seasons={seasons} activeSportSlug={activeSportSlug} />
+      <h1 className="flex items-center gap-2.5 text-3xl font-black tracking-tight text-white">
+        <SportIcon slug={sport.slug} className="h-7 w-7 text-vanguard-volt" />
+        {season?.name ?? "Standings"}
+      </h1>
+      <LeagueTags mode="route" seasons={seasons} activeSportSlug={activeSportSlug} routeBase="/standings" />
     </div>
   );
 }

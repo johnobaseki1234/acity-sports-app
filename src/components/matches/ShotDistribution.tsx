@@ -1,15 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { MatchEvent } from "@/lib/supabase/types";
 import {
   ZONE_NAMES,
-  ZONE_COUNT,
   COURT,
   buildZoneGeometry,
   hashSeed,
 } from "@/lib/utils/courtZones";
-import { computeZoneTelemetry, hasRealZoneData, pct } from "@/lib/utils/singleGameStats";
+import { computeZoneTelemetry, hasRealZoneData, pct, type ZoneEvent } from "@/lib/utils/singleGameStats";
 
 const VOLT = "#CCFF00";
 const CRIMSON = "#E50914";
@@ -32,7 +30,7 @@ function buildDemoZones(playerId: string): Zone[] {
   });
 }
 
-function buildRealZones(playerId: string, events: MatchEvent[]): Zone[] {
+function buildRealZones(playerId: string, events: readonly ZoneEvent[]): Zone[] {
   const geometry = buildZoneGeometry();
   const tallies = computeZoneTelemetry(playerId, events);
   return geometry.map((g) => {
@@ -46,7 +44,7 @@ export function ShotDistribution({
   events,
 }: {
   playerId: string;
-  events: MatchEvent[];
+  events: readonly ZoneEvent[];
 }) {
   const [selected, setSelected] = useState<number | null>(null);
 

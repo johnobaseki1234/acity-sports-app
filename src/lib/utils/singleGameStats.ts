@@ -119,7 +119,13 @@ export function pct(made: number, attempted: number): number {
  */
 export type ZoneTally = { made: number; attempts: number };
 
-export function computeZoneTelemetry(playerId: string, events: MatchEvent[]): ZoneTally[] {
+/** Minimal event shape the zone reader needs — works for live match rows and season history alike. */
+export type ZoneEvent = Pick<MatchEvent, "player_id" | "event_type" | "details">;
+
+export function computeZoneTelemetry(
+  playerId: string,
+  events: readonly ZoneEvent[]
+): ZoneTally[] {
   const tallies: ZoneTally[] = Array.from({ length: ZONE_COUNT }, () => ({ made: 0, attempts: 0 }));
 
   for (const ev of events) {

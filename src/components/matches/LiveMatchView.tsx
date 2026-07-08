@@ -233,7 +233,6 @@ export function LiveMatchView({ match: initialMatch, initialEvents, sport, roste
           awayRoster={awayRoster}
           events={events}
           sport={sport}
-          onSelectPlayer={setSelectedPlayer}
         />
       )}
 
