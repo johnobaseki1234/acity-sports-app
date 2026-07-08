@@ -60,12 +60,11 @@ export default async function HomePage({
   const live = filtered.filter((m) => m.status === "live" || m.status === "halftime");
 
   const todayCount = matches.filter((m) => formatMatchDate(m.scheduled_at) === "Today").length;
-  const seasonName = matches[0]?.season?.name ?? "—";
 
   return (
     <div className="space-y-6">
       <Reveal>
-        <Hero liveCount={live.length} todayCount={todayCount} seasonName={seasonName} />
+        <Hero liveCount={live.length} todayCount={todayCount} />
       </Reveal>
 
       <Reveal delay={0.05}>

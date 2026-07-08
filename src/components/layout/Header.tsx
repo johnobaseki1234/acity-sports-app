@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, Bell } from "lucide-react";
+import { Bell } from "lucide-react";
 import { HeaderSearch } from "@/components/ui/HeaderSearch";
 
 const NAV = [
@@ -33,8 +33,9 @@ export default function Header() {
         <div className="max-w-5xl mx-auto px-4 sm:px-5 h-16 flex items-center justify-between gap-4">
           {/* Brand lockup */}
           <Link href="/" className="flex items-center gap-2.5 shrink-0 group">
-            <span className="grid place-items-center h-10 w-10 rounded-2xl bg-vanguard-volt text-black shadow-lg shadow-vanguard-volt/25 transition-transform group-active:scale-95">
-              <Trophy className="h-5 w-5" strokeWidth={2.25} />
+            <span className="grid place-items-center h-10 w-10 rounded-2xl bg-black shadow-lg shadow-vanguard-volt/10 transition-transform group-active:scale-95 overflow-hidden">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/vanguard-logo.png" alt="VANGUARD" className="h-full w-full object-cover" />
             </span>
             <span className="leading-tight">
               <span className="block font-extrabold tracking-tight text-[15px] text-white">

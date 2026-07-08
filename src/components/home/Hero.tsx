@@ -1,13 +1,11 @@
-import { Radio, CalendarDays, Trophy, type LucideIcon } from "lucide-react";
+import { Radio, CalendarDays, type LucideIcon } from "lucide-react";
 
 export function Hero({
   liveCount,
   todayCount,
-  seasonName,
 }: {
   liveCount: number;
   todayCount: number;
-  seasonName: string;
 }) {
   return (
     <section className="relative overflow-hidden rounded-[32px] bg-vanguard-charcoal text-white shadow-2xl shadow-vanguard-crimson/25">
@@ -28,10 +26,9 @@ export function Hero({
           Live university sports scores, fixtures and standings — all in one place.
         </p>
 
-        <div className="mt-7 grid grid-cols-3 gap-2.5 sm:gap-4 max-w-lg">
+        <div className="mt-7 grid grid-cols-2 gap-2.5 sm:gap-4 max-w-xs">
           <Stat Icon={Radio} value={liveCount} label="Live Matches" />
           <Stat Icon={CalendarDays} value={todayCount} label="Today's Fixtures" />
-          <Stat Icon={Trophy} value={seasonName} label="Active Season" small />
         </div>
       </div>
     </section>
@@ -42,17 +39,15 @@ function Stat({
   Icon,
   value,
   label,
-  small,
 }: {
   Icon: LucideIcon;
   value: number | string;
   label: string;
-  small?: boolean;
 }) {
   return (
     <div className="rounded-2xl bg-white/10 backdrop-blur-md border border-white/15 px-3 py-3.5 text-center">
       <Icon className="h-5 w-5 mx-auto text-white/90" strokeWidth={2.25} />
-      <div className={`mt-1.5 font-black tracking-tight tabular-nums truncate ${small ? "text-sm sm:text-base" : "text-2xl sm:text-3xl"}`}>
+      <div className="mt-1.5 font-black tracking-tight tabular-nums truncate text-2xl sm:text-3xl">
         {value}
       </div>
       <div className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wide text-white/70 truncate">

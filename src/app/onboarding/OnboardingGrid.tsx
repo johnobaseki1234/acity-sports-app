@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Trophy, Check, Clock } from "lucide-react";
+import { Check, Clock } from "lucide-react";
 import type { School, Season } from "@/lib/supabase/types";
 import { useLeagueOfInterest } from "@/hooks/useLeagueOfInterest";
 import { leagueTagLabel } from "@/lib/utils/leagueLabel";
@@ -29,8 +29,9 @@ export function OnboardingGrid({ schools, seasons }: Props) {
   return (
     <div className="w-full max-w-2xl">
       <div className="text-center mb-8">
-        <div className="mx-auto mb-3 grid place-items-center h-14 w-14 rounded-2xl bg-vanguard-volt text-black shadow-lg shadow-vanguard-volt/25">
-          <Trophy className="h-7 w-7" strokeWidth={2.25} />
+        <div className="mx-auto mb-3 grid place-items-center h-16 w-16 rounded-2xl bg-black shadow-lg shadow-vanguard-volt/10 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/vanguard-logo.png" alt="VANGUARD" className="h-full w-full object-cover" />
         </div>
         <h1 className="text-3xl font-black tracking-tight text-white">Pick Your Allegiances</h1>
         <p className="text-sm text-zinc-400 mt-2 max-w-md mx-auto">
