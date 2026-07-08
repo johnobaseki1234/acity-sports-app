@@ -7,23 +7,24 @@ export type CareerAverages = {
   lines: { label: string; value: number }[];
 };
 
-/**
- * Season career averages for a player, derived from the `player_stats` view
- * (season totals) divided by `player_game_counts` (distinct finished
- * matches from match_events). Returns null if the player has no games yet.
- */
-export async function fetchCareerAverages(
-  playerId: string,
+export type CareerTotals = {
+  goals?: number | null;
+  assists?: number | null;
+  saves?: number | null;
+  two_pointers_made?: number | null;
+  three_pointers_made?: number | null;
+  free_throws_made?: number | null;
+  rebounds?: number | null;
+  steals?: number | null;
+  blocks?: number | null;
+};
+
+/** Pure calculation — usable from both server and client contexts. */
+export function computeCareerAverages(
+  totals: CareerTotals | undefined,
+  games: number,
   sportSlug: string
-): Promise<CareerAverages | null> {
-  const supabase = createClient();
-
-  const [{ data: totals }, { data: gameCount }] = await Promise.all([
-    supabase.from("player_stats").select("*").eq("player_id", playerId).maybeSingle(),
-    supabase.from("player_game_counts").select("games_played").eq("player_id", playerId).maybeSingle(),
-  ]);
-
-  const games = gameCount?.games_played ?? 0;
+): CareerAverages | null {
   if (!totals || games === 0) return null;
 
   if (sportSlug === "basketball") {
@@ -51,6 +52,25 @@ export async function fetchCareerAverages(
       { label: "SPG", value: calculateSPG(totals.saves ?? 0, games) },
     ],
   };
+}
+
+/**
+ * Season career averages for a player, derived from the `player_stats` view
+ * (season totals) divided by `player_game_counts` (distinct finished
+ * matches from match_events). Returns null if the player has no games yet.
+ */
+export async function fetchCareerAverages(
+  playerId: string,
+  sportSlug: string
+): Promise<CareerAverages | null> {
+  const supabase = createClient();
+
+  const [{ data: totals }, { data: gameCount }] = await Promise.all([
+    supabase.from("player_stats").select("*").eq("player_id", playerId).maybeSingle(),
+    supabase.from("player_game_counts").select("games_played").eq("player_id", playerId).maybeSingle(),
+  ]);
+
+  return computeCareerAverages(totals ?? undefined, gameCount?.games_played ?? 0, sportSlug);
 }
 
 export { calculateFGPercent };

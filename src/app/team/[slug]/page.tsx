@@ -1,52 +1,19 @@
 import { createClient } from "../../../lib/supabase/server";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Award, Play, Users } from "lucide-react";
+import { Award, Users } from "lucide-react";
 import FollowButton from "../../../components/ui/FollowButton";
+import { computeCareerAverages, type CareerTotals } from "../../../lib/stats/careerAverages";
 import type { Match, Player } from "../../../lib/supabase/types";
 
 interface TeamPageProps {
   params: Promise<{ slug: string }>;
 }
 
-type CareerStats = {
+type CareerStats = CareerTotals & {
   player_id: string;
   sport_slug?: string | null;
-  goals?: number | null;
-  saves?: number | null;
-  yellow_cards?: number | null;
-  red_cards?: number | null;
-  two_pointers_made?: number | null;
-  three_pointers_made?: number | null;
-  free_throws_made?: number | null;
-  rebounds?: number | null;
-  steals?: number | null;
-  blocks?: number | null;
 };
-
-function telemetry(stats: CareerStats | undefined): { label: string; value: number }[] {
-  if (!stats) return [
-    { label: "PTS", value: 0 },
-    { label: "REB", value: 0 },
-    { label: "STL", value: 0 },
-  ];
-  if (stats.sport_slug === "football") {
-    return [
-      { label: "GLS", value: stats.goals ?? 0 },
-      { label: "SAV", value: stats.saves ?? 0 },
-      { label: "CRD", value: (stats.yellow_cards ?? 0) + (stats.red_cards ?? 0) },
-    ];
-  }
-  const pts =
-    (stats.two_pointers_made ?? 0) * 2 +
-    (stats.three_pointers_made ?? 0) * 3 +
-    (stats.free_throws_made ?? 0);
-  return [
-    { label: "PTS", value: pts },
-    { label: "REB", value: stats.rebounds ?? 0 },
-    { label: "STL", value: stats.steals ?? 0 },
-  ];
-}
 
 export default async function TeamProfilePage({ params }: TeamPageProps) {
   const { slug } = await params;
@@ -92,17 +59,31 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
   const retired = allPlayers.filter((p) => p.status === "retired");
   const alumni = allPlayers.filter((p) => p.status === "alumni");
 
-  // Career telemetry for the scout cards.
+  // Career per-game averages for the scouting matrix.
   const statsByPlayer = new Map<string, CareerStats>();
+  const gamesByPlayer = new Map<string, number>();
   if (allPlayers.length > 0) {
-    const { data: careerStats } = await supabase
-      .from("player_stats")
-      .select("*")
-      .in("player_id", allPlayers.map((p) => p.id));
+    const playerIds = allPlayers.map((p) => p.id);
+    const [{ data: careerStats }, { data: gameCounts }] = await Promise.all([
+      supabase.from("player_stats").select("*").in("player_id", playerIds),
+      supabase.from("player_game_counts").select("player_id, games_played").in("player_id", playerIds),
+    ]);
     for (const row of (careerStats ?? []) as CareerStats[]) {
       statsByPlayer.set(row.player_id, row);
     }
+    for (const row of gameCounts ?? []) {
+      gamesByPlayer.set(row.player_id, row.games_played);
+    }
   }
+
+  const rosterWithAverages = activeRoster
+    .map((player) => {
+      const stats = statsByPlayer.get(player.id);
+      const games = gamesByPlayer.get(player.id) ?? 0;
+      const averages = computeCareerAverages(stats, games, stats?.sport_slug ?? "basketball");
+      return { player, averages };
+    })
+    .sort((a, b) => (b.averages?.lines[0]?.value ?? -1) - (a.averages?.lines[0]?.value ?? -1));
 
   const allMatches = (matches ?? []) as Match[];
   const results = allMatches
@@ -158,7 +139,7 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
         </div>
       </div>
 
-      {/* Scout Roster Hub */}
+      {/* Scouting Matrix — dense roster table, sorted by per-game impact */}
       <section>
         <div className="flex items-center gap-2 mb-4">
           <Users className="h-5 w-5 text-vanguard-volt" strokeWidth={2.25} />
@@ -171,16 +152,7 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
         {activeRoster.length === 0 ? (
           <p className="text-zinc-500 text-sm">No active players on this team yet.</p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {activeRoster.map((player) => (
-              <ScoutCard
-                key={player.id}
-                player={player}
-                stats={statsByPlayer.get(player.id)}
-                teamColor={team.primary_color}
-              />
-            ))}
-          </div>
+          <ScoutingMatrix rows={rosterWithAverages} teamColor={team.primary_color} />
         )}
       </section>
 
@@ -258,76 +230,89 @@ export default async function TeamProfilePage({ params }: TeamPageProps) {
   );
 }
 
-/** High-density Hudl-style scout card: telemetry header, position tag, film slot. */
-function ScoutCard({
-  player,
-  stats,
+/** High-density scouting matrix: avatar, position, true per-game rate averages — sorted by impact. */
+function ScoutingMatrix({
+  rows,
   teamColor,
 }: {
-  player: Player;
-  stats?: CareerStats;
+  rows: { player: Player; averages: ReturnType<typeof computeCareerAverages> }[];
   teamColor?: string | null;
 }) {
-  const tiles = telemetry(stats);
+  // Column set follows whichever sport the top-ranked player belongs to;
+  // mixed-sport rosters are rare, and every row still shows its own values.
+  const columns = rows[0]?.averages?.lines.map((l) => l.label) ?? ["PPG", "RPG", "APG"];
+
   return (
-    <Link
-      href={`/player/${player.id}`}
-      className="group rounded-2xl border border-white/10 bg-zinc-900/70 overflow-hidden hover:border-vanguard-volt/40 transition-colors"
-    >
-      {/* Career telemetry header */}
-      <div className="grid grid-cols-3 divide-x divide-white/5 bg-white/[0.03] border-b border-white/10">
-        {tiles.map((t) => (
-          <div key={t.label} className="px-2 py-2 text-center">
-            <div className="text-base font-black tabular-nums text-vanguard-volt leading-none">
-              {t.value}
-            </div>
-            <div className="text-[9px] font-black uppercase tracking-widest text-zinc-500 mt-1">
-              {t.label}
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* Identity row */}
-      <div className="flex items-center gap-3 px-3 py-3">
-        <span
-          className="grid place-items-center h-10 w-10 shrink-0 rounded-xl font-black text-sm tabular-nums text-white"
-          style={{ background: teamColor ?? "#27272a" }}
-        >
-          {player.jersey_number}
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-bold text-sm text-white truncate group-hover:text-vanguard-volt transition-colors">
-            {player.name}
-          </p>
-          <div className="flex items-center gap-1.5 mt-1">
-            {player.position && (
-              <span className="rounded border border-vanguard-volt/40 text-vanguard-volt text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5">
-                {player.position}
-              </span>
-            )}
-            {player.secondary_position && (
-              <span className="rounded border border-white/15 text-zinc-400 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5">
-                {player.secondary_position}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Game film slot — aspect-locked, Hudl-ready */}
-      <div className="mx-3 mb-3 aspect-video rounded-xl border border-white/10 bg-black/40 grid place-items-center relative overflow-hidden">
-        <div aria-hidden className="absolute inset-0 bg-gradient-to-br from-vanguard-volt/[0.05] to-transparent" />
-        <div className="relative flex flex-col items-center gap-1">
-          <span className="grid place-items-center h-8 w-8 rounded-full bg-white/10 group-hover:bg-vanguard-volt group-hover:text-black text-vanguard-volt transition-colors">
-            <Play className="h-3.5 w-3.5" fill="currentColor" />
-          </span>
-          <span className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-600">
-            Film Room · Soon
-          </span>
-        </div>
-      </div>
-    </Link>
+    <div className="overflow-x-auto rounded-2xl border border-white/10 bg-zinc-900/70">
+      <table className="w-full min-w-[480px] text-sm">
+        <thead className="bg-white/[0.03] border-b border-white/10 text-[10px] uppercase tracking-wider text-zinc-500">
+          <tr>
+            <th className="pl-4 pr-2 py-2.5 text-left font-black">Player</th>
+            <th className="px-2 py-2.5 text-center font-black hidden sm:table-cell">GP</th>
+            {columns.map((label) => (
+              <th key={label} className="px-2 py-2.5 text-center font-black">{label}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map(({ player, averages }, index) => (
+            <tr
+              key={player.id}
+              className={`border-b border-white/5 last:border-0 hover:bg-white/[0.04] transition-colors ${
+                index === 0 ? "bg-vanguard-volt/[0.05]" : ""
+              }`}
+            >
+              <td className="pl-4 pr-2 py-2">
+                <Link href={`/player/${player.id}`} className="group/pl flex items-center gap-3 min-w-0">
+                  {player.photo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={player.photo_url}
+                      alt={player.name}
+                      className="h-8 w-8 shrink-0 rounded-lg object-cover border border-white/10"
+                    />
+                  ) : (
+                    <span
+                      className="grid place-items-center h-8 w-8 shrink-0 rounded-lg font-black text-xs tabular-nums text-white"
+                      style={{ background: teamColor ?? "#27272a" }}
+                    >
+                      {player.jersey_number}
+                    </span>
+                  )}
+                  <div className="min-w-0">
+                    <p className="font-bold text-sm text-white truncate group-hover/pl:text-vanguard-volt transition-colors">
+                      {player.name}
+                    </p>
+                    {player.position && (
+                      <p className="text-[10px] font-black uppercase tracking-wider text-zinc-500">
+                        {player.position}
+                        {player.secondary_position ? ` / ${player.secondary_position}` : ""}
+                      </p>
+                    )}
+                  </div>
+                </Link>
+              </td>
+              <td className="px-2 py-2 text-center tabular-nums text-xs text-zinc-500 hidden sm:table-cell">
+                {averages?.gamesPlayed ?? 0}
+              </td>
+              {columns.map((label, i) => {
+                const value = averages?.lines[i]?.value;
+                return (
+                  <td
+                    key={label}
+                    className={`px-2 py-2 text-center tabular-nums font-black ${
+                      index === 0 ? "text-vanguard-volt" : "text-zinc-200"
+                    }`}
+                  >
+                    {value ?? "—"}
+                  </td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
 
