@@ -6,6 +6,7 @@ import { PlayerStatsTabs, type SportStatBlock } from "./PlayerStatsTabs";
 
 interface PlayerPageProps {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ fromMatch?: string }>;
 }
 
 type RawEvent = {
@@ -113,8 +114,9 @@ async function getTeamSport(
   return sport ?? null;
 }
 
-export default async function PlayerProfilePage({ params }: PlayerPageProps) {
+export default async function PlayerProfilePage({ params, searchParams }: PlayerPageProps) {
   const { id } = await params;
+  const { fromMatch } = await searchParams;
   const supabase = await createClient();
 
   const { data: player, error: playerError } = await supabase
@@ -174,14 +176,23 @@ export default async function PlayerProfilePage({ params }: PlayerPageProps) {
     <div className="min-h-screen bg-vanguard-charcoal text-zinc-100 py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto space-y-6">
 
-        {/* Navigation Link Wire */}
-        {player.team && (
+        {/* Navigation Link Wire — returns to the Box Score tab when that's where the click came from */}
+        {fromMatch ? (
           <Link
-            href={`/team/${player.team.slug}`}
+            href={`/match/${fromMatch}?tab=box`}
             className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-vanguard-volt transition-colors"
           >
-            <ArrowLeft className="h-4 w-4 stroke-[2.5]" /> Back to {player.team.name}
+            <ArrowLeft className="h-4 w-4 stroke-[2.5]" /> Back to Box Score
           </Link>
+        ) : (
+          player.team && (
+            <Link
+              href={`/team/${player.team.slug}`}
+              className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-zinc-500 hover:text-vanguard-volt transition-colors"
+            >
+              <ArrowLeft className="h-4 w-4 stroke-[2.5]" /> Back to {player.team.name}
+            </Link>
+          )
         )}
 
         {/* Premium Profile Info Header Panel */}
