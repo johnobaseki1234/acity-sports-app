@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronLeft, Radio, Clock, Play } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { Match, MatchEvent, Player, Sport } from "@/lib/supabase/types";
@@ -9,21 +10,38 @@ import { SportIcon } from "@/components/ui/SportIcon";
 import { EventIcon } from "@/components/ui/EventIcon";
 import { PlayerDrawer } from "@/components/matches/PlayerDrawer";
 import { BoxScore } from "@/components/matches/BoxScore";
+import { MatchCenter } from "@/components/matches/MatchCenter";
+import { scoreValueFor } from "@/lib/utils/singleGameStats";
 import { formatMatchDate, formatMatchTime, getStatusLabel } from "@/lib/utils/match";
 import Link from "next/link";
 
 type Props = { match: Match; initialEvents: MatchEvent[]; sport: Sport; roster?: Player[] };
 
-type Tab = "feed" | "box";
+type Tab = "center" | "box" | "feed";
+
+const VALID_TABS: Tab[] = ["center", "box", "feed"];
 
 const PERIOD_START_TYPES = ["half_start", "quarter_start", "set_start"];
 
 export function LiveMatchView({ match: initialMatch, initialEvents, sport, roster = [] }: Props) {
   const supabase = createClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [match, setMatch] = useState(initialMatch);
   const [events, setEvents] = useState<MatchEvent[]>(initialEvents);
   const [selectedPlayer, setSelectedPlayer] = useState<Player | null>(null);
-  const [tab, setTab] = useState<Tab>("feed");
+
+  const urlTab = searchParams.get("tab");
+  const [tab, setTabState] = useState<Tab>(
+    VALID_TABS.includes(urlTab as Tab) ? (urlTab as Tab) : "center"
+  );
+
+  function setTab(next: Tab) {
+    setTabState(next);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", next);
+    router.replace(`/match/${match.id}?${params.toString()}`, { scroll: false });
+  }
 
   const isLive = match.status === "live" || match.status === "halftime";
 
@@ -175,15 +193,39 @@ export function LiveMatchView({ match: initialMatch, initialEvents, sport, roste
             </div>
           </div>
 
-          {/* SofaScore-style segmented tabs */}
-          <div className="relative grid grid-cols-2 border-t border-white/10">
-            <TabButton label="Match Feed" active={tab === "feed"} onClick={() => setTab("feed")} />
+          {/* NBA-style 3-tab segmented control */}
+          <div className="relative grid grid-cols-3 border-t border-white/10">
+            <TabButton label="Match Center" active={tab === "center"} onClick={() => setTab("center")} />
             <TabButton label="Box Score" active={tab === "box"} onClick={() => setTab("box")} />
+            <TabButton label="Play-by-Play" active={tab === "feed"} onClick={() => setTab("feed")} />
           </div>
         </div>
       </div>
 
-      {tab === "feed" ? (
+      {tab === "center" && (
+        <MatchCenter
+          homeTeam={match.home_team}
+          awayTeam={match.away_team}
+          homeRoster={homeRoster}
+          awayRoster={awayRoster}
+          events={events}
+          sport={sport}
+        />
+      )}
+
+      {tab === "box" && (
+        <BoxScore
+          homeTeam={match.home_team}
+          awayTeam={match.away_team}
+          homeRoster={homeRoster}
+          awayRoster={awayRoster}
+          events={events}
+          sport={sport}
+          matchId={match.id}
+        />
+      )}
+
+      {tab === "feed" && (
         <>
           {periodScores.length > 0 && (
             <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-3xl shadow-lg border border-zinc-200 dark:border-zinc-800 p-4">
@@ -201,17 +243,18 @@ export function LiveMatchView({ match: initialMatch, initialEvents, sport, roste
             </div>
           )}
 
-          {/* Play-by-play */}
+          {/* Play-by-play — chronological, with running score variance */}
           {events.length > 0 && (
             <div className="bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xl rounded-3xl shadow-lg border border-zinc-200 dark:border-zinc-800 p-4">
-              <h2 className="text-sm font-bold text-zinc-500 dark:text-zinc-400 uppercase mb-3">Match Feed</h2>
+              <h2 className="text-sm font-bold text-zinc-500 dark:text-zinc-400 uppercase mb-3">Play-by-Play</h2>
               <div className="space-y-1">
-                {events.map((event) => (
+                {buildPlayByPlay(events, sport, match).map(({ event, runningHome, runningAway }) => (
                   <PublicEventRow
                     key={event.id}
                     event={event}
                     sport={sport}
                     onSelectPlayer={setSelectedPlayer}
+                    runningScore={runningHome != null ? { home: runningHome, away: runningAway! } : undefined}
                   />
                 ))}
               </div>
@@ -225,15 +268,6 @@ export function LiveMatchView({ match: initialMatch, initialEvents, sport, roste
             </div>
           )}
         </>
-      ) : (
-        <BoxScore
-          homeTeam={match.home_team}
-          awayTeam={match.away_team}
-          homeRoster={homeRoster}
-          awayRoster={awayRoster}
-          events={events}
-          sport={sport}
-        />
       )}
 
       <PlayerDrawer
@@ -288,27 +322,55 @@ function LiveClock({ startIso, running }: { startIso: string | null; running: bo
   );
 }
 
+/**
+ * Reconstructs the running score at each event by walking chronologically
+ * (events arrive newest-first) and replaying score-affecting events forward.
+ */
+function buildPlayByPlay(
+  events: MatchEvent[],
+  sport: Sport,
+  match: Match
+): { event: MatchEvent; runningHome: number | null; runningAway: number | null }[] {
+  const chronological = [...events].reverse();
+  let home = 0;
+  let away = 0;
+  const withScores = chronological.map((event) => {
+    const value = scoreValueFor(sport, event.event_type);
+    if (value !== 0 && event.team_id) {
+      if (event.team_id === match.home_team_id) home += value;
+      else if (event.team_id === match.away_team_id) away += value;
+    }
+    return { event, runningHome: home, runningAway: away };
+  });
+  // Return newest-first to match the feed's display order.
+  return withScores.reverse();
+}
+
 function PublicEventRow({
   event,
   sport,
   onSelectPlayer,
+  runningScore,
 }: {
   event: MatchEvent;
   sport: Sport;
   onSelectPlayer: (p: Player) => void;
+  runningScore?: { home: number; away: number };
 }) {
   const config = sport.event_types.find((e) => e.type === event.event_type);
   const isSystem = ["half_start","half_end","match_end","quarter_start","quarter_end","set_start","set_end"].includes(event.event_type);
 
   if (isSystem) {
     return (
-      <div className="text-center py-2">
-        <span className="text-xs text-zinc-400 font-semibold bg-zinc-50 dark:bg-zinc-800 px-3 py-1 rounded-full">
+      <div className="text-center py-2.5">
+        <span className="text-xs text-vanguard-volt font-black uppercase tracking-widest bg-vanguard-volt/10 px-3 py-1 rounded-full">
           — {config?.label ?? event.event_type} —
         </span>
       </div>
     );
   }
+
+  const isScoring = scoreValueFor(sport, event.event_type) > 0;
 
   const colorMap: Record<string, string> = {
     green: "bg-green-50 dark:bg-green-500/15 text-green-700 dark:text-green-400",
@@ -319,8 +381,7 @@ function PublicEventRow({
   };
 
   // Key moments (scores, red cards) carry a media slot ready for game-film reels.
-  const isKeyMoment =
-    (config?.affects_score && (config.score_value ?? 0) > 0) || event.event_type === "red_card";
+  const isKeyMoment = isScoring || event.event_type === "red_card";
 
   return (
     <div className="flex items-center gap-3 py-2 border-b border-zinc-50 dark:border-zinc-800/60 last:border-0">
@@ -342,6 +403,11 @@ function PublicEventRow({
         )}
         <span className="text-xs text-zinc-400 ml-1">({event.team?.short_name})</span>
       </div>
+      {isScoring && runningScore && (
+        <span className="text-xs font-black tabular-nums text-vanguard-volt shrink-0">
+          {runningScore.home}–{runningScore.away}
+        </span>
+      )}
       {event.match_minute && (
         <span className="text-xs text-zinc-400 shrink-0">{event.match_minute}&apos;</span>
       )}

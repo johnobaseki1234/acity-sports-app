@@ -20,9 +20,27 @@ export type SingleGameStats = {
   reboundsOff: number;
   reboundsDef: number;
   reboundsUnclassified: number; // legacy "rebound" events logged before the O/D split
+  // Football (ACFL) box-score telemetry.
+  shots: number;
+  shotsOnTarget: number;
+  tackles: number;
+  interceptions: number;
 };
 
 export const FOUL_EVENT_TYPES = ["foul", "technical_foul", "yellow_card", "red_card"];
+
+/**
+ * The authoritative points value for a scoring event. `event_types[].score_value`
+ * is the primary source, but falls back to `sport.scoring_rules` — the same
+ * column the DB trigger uses to compute match totals — for datasets where
+ * the event_types config was edited without also setting score_value.
+ */
+export function scoreValueFor(sport: Sport, eventType: string): number {
+  const config = sport.event_types.find((e) => e.type === eventType);
+  if (config?.score_value) return config.score_value;
+  if (!config?.affects_score) return 0;
+  return sport.scoring_rules?.[eventType] ?? 0;
+}
 
 export const EMPTY_GAME_STATS: SingleGameStats = {
   score: 0,
@@ -40,6 +58,10 @@ export const EMPTY_GAME_STATS: SingleGameStats = {
   reboundsOff: 0,
   reboundsDef: 0,
   reboundsUnclassified: 0,
+  shots: 0,
+  shotsOnTarget: 0,
+  tackles: 0,
+  interceptions: 0,
 };
 
 export function computeSingleGameStats(
@@ -53,10 +75,7 @@ export function computeSingleGameStats(
     if (ev.assist_player_id === playerId) stats.assists++;
     if (ev.player_id !== playerId) continue;
 
-    const config = sport.event_types.find((e) => e.type === ev.event_type);
-    if (config?.affects_score && (config.score_value ?? 0) > 0) {
-      stats.score += config.score_value ?? 0;
-    }
+    stats.score += scoreValueFor(sport, ev.event_type);
     if (ev.event_type === "assist") stats.assists++;
     if (ev.event_type === "block") stats.blocks++;
     if (ev.event_type === "steal") stats.steals++;
@@ -96,6 +115,19 @@ export function computeSingleGameStats(
         break;
       case "rebound":
         stats.reboundsUnclassified++;
+        break;
+      case "shot_on_target":
+        stats.shots++;
+        stats.shotsOnTarget++;
+        break;
+      case "shot":
+        stats.shots++;
+        break;
+      case "tackle_won":
+        stats.tackles++;
+        break;
+      case "interception":
+        stats.interceptions++;
         break;
     }
   }
