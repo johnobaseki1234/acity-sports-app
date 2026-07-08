@@ -8,13 +8,13 @@ import BottomNav from "../components/layout/BottomNav";
 import ServiceWorkerRegister from "../components/pwa/ServiceWorkerRegister";
 
 export const metadata: Metadata = {
-  title: "VANGUARD",
+  title: "Vanguard Sports",
   description: "The Collegiate Sports Operating Ecosystem — live scores, fixtures and standings.",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "VANGUARD",
+    title: "Vanguard Sports",
   },
   icons: {
     icon: "/icon-192x192.png",
